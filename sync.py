@@ -42,13 +42,13 @@ async def upload_script(session, url, user, passwd, script):
     with open(join(mypath, 'scripts/' + script), 'r') as f:
         data=f.read()
     with async_timeout.timeout(10):
-        async with session.get(url + '/JSSResource/scripts/name/' + script,
+        template = await get_script_template(session, url, user, passwd, script)
+        async with session.get(url + '/JSSResource/scripts/name/' + template.find('name').text,
                 auth=auth) as resp:
-            template = await get_script_template(session, url, user, passwd, script)
             template.find('script_contents').text = data
             print(ET.tostring(template))
             if resp.status == 200:
-                put_url = url + '/JSSResource/scripts/name/' + script
+                put_url = url + '/JSSResource/scripts/name/' + template.find('name').text
                 async with session.put(put_url, auth=auth, data=ET.tostring(template), headers=headers) as response:
                     print(response.status)
                     return response.status
@@ -74,11 +74,13 @@ async def get_script_template(session, url, user, passwd, script):
                         template = ET.fromstring(await response.text())
                 else:
                     template = ET.parse(join(mypath, 'templates/script.xml')).getroot()
-    if not template.find('name'):
+
+    # name is mandatory, so we use the filename if nothing is set in a template
+    if template.find('name') is None:
         ET.SubElement(template, 'name').text = script
-    if not template.find('filename'):
-        ET.SubElement(template, 'filename').text = script
-    # print(ET.tostring(template))
+    elif template.find('name').text == '':
+        template.find('name').text = script
+
     return template
 
 
