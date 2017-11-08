@@ -11,7 +11,7 @@ from os.path import dirname, join, realpath
 import xml.etree.ElementTree as ET
 
 
-supported_script_extensions = ('sh', 'py', 'pl', 'swift', 'txt')
+supported_script_extensions = ('sh', 'py', 'pl', 'swift')
 supported_ea_extensions = ('sh', 'py', 'pl', 'swift')
 supported_profile_extensions = ('.mobileconfig', '.profile')
 
