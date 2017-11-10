@@ -20,7 +20,11 @@ async def upload_profiles(session):
     pass
 
 
-async def upload_extension_attributes(session):
+async def upload_extension_attributes(session, url, user, passwd):
+    pass
+
+
+async def upload_extension_attribute(session, url, user, passwd, ext_attr):
     pass
 
 
@@ -46,17 +50,16 @@ async def upload_script(session, url, user, passwd, script):
         async with session.get(url + '/JSSResource/scripts/name/' + template.find('name').text,
                 auth=auth) as resp:
             template.find('script_contents').text = data
-            print(ET.tostring(template))
+            # print(ET.tostring(template))
             if resp.status == 200:
                 put_url = url + '/JSSResource/scripts/name/' + template.find('name').text
-                async with session.put(put_url, auth=auth, data=ET.tostring(template), headers=headers) as response:
-                    print(response.status)
-                    return response.status
+                resp = await session.put(put_url, auth=auth, data=ET.tostring(template), headers=headers)
             else:
                 post_url = url + '/JSSResource/scripts/id/0'
-                async with session.post(post_url, auth=auth, data=ET.tostring(template), headers=headers) as response:
-                    print(response.status)
-                    return response.status
+                resp = await session.post(post_url, auth=auth, data=ET.tostring(template), headers=headers)
+    if resp.status in (201, 200):
+        print(f'Uploaded script {script}')
+    return resp.status
 
 
 async def get_script_template(session, url, user, passwd, script):
@@ -74,13 +77,11 @@ async def get_script_template(session, url, user, passwd, script):
                         template = ET.fromstring(await response.text())
                 else:
                     template = ET.parse(join(mypath, 'templates/script.xml')).getroot()
-
     # name is mandatory, so we use the filename if nothing is set in a template
     if template.find('name') is None:
         ET.SubElement(template, 'name').text = script
     elif template.find('name').text == '':
         template.find('name').text = script
-
     return template
 
 
