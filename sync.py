@@ -78,9 +78,10 @@ async def get_script_template(session, url, user, passwd, script):
                 else:
                     template = ET.parse(join(mypath, 'templates/script.xml')).getroot()
     # name is mandatory, so we use the filename if nothing is set in a template
+    print(ET.tostring(template))
     if template.find('name') is None:
         ET.SubElement(template, 'name').text = script
-    elif template.find('name').text == '':
+    elif template.find('name').text is '' or template.find('name').text is None:
         template.find('name').text = script
     return template
 
