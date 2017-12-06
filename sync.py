@@ -51,7 +51,7 @@ async def upload_extension_attribute(session, url, user, passwd, ext_attr):
                 post_url = url + '/JSSResource/computerextensionattributes/id/0'
                 resp = await session.post(post_url, auth=auth, data=ET.tostring(template), headers=headers)
     if resp.status in (201, 200):
-        print(f'Uploaded Extension Attribute {ext_attr}')
+        print('Uploaded Extension Attribute: %s' % ext_attr)
     return resp.status
 
 
@@ -110,7 +110,7 @@ async def upload_script(session, url, user, passwd, script):
                 post_url = url + '/JSSResource/scripts/id/0'
                 resp = await session.post(post_url, auth=auth, data=ET.tostring(template), headers=headers)
     if resp.status in (201, 200):
-        print(f'Uploaded script {script}')
+        print('Uploaded script: %s' % script)
     return resp.status
 
 
