@@ -20,36 +20,37 @@ async def upload_profiles(session):
     pass
 
 
-async def upload_extension_attributes(session, url, user, passwd):
+async def upload_extension_attributes(session, url, user, passwd, semaphore):
     mypath = dirname(realpath(__file__))
     ext_attrs = [f.name for f in os.scandir(join(mypath, 'extension_attributes'))
                  if f.is_file() and f.name.split('.')[-1] in supported_ea_extensions]
     tasks = []
     for ea in ext_attrs:
-        task = asyncio.ensure_future(upload_extension_attribute(session, url, user, passwd, ea))
+        task = asyncio.ensure_future(upload_extension_attribute(session, url, user, passwd, ea, semaphore))
         tasks.append(task)
     responses = await asyncio.gather(*tasks)
 
 
-async def upload_extension_attribute(session, url, user, passwd, ext_attr):
+async def upload_extension_attribute(session, url, user, passwd, ext_attr, semaphore):
     mypath = dirname(realpath(__file__))
     auth = aiohttp.BasicAuth(user, passwd)
     headers = {'content-type': 'application/xml'}
     with open(join(mypath, 'extension_attributes/' + ext_attr), 'r') as f:
         data=f.read()
-    with async_timeout.timeout(10):
-        template = await get_ea_template(session, url, user, passwd, ext_attr)
-        async with session.get(url + '/JSSResource/computerextensionattributes/name/' + template.find('name').text,
-                auth=auth) as resp:
-            template.find('input_type/script').text = data
-            if args.verbose:
-                print(ET.tostring(template))
-            if resp.status == 200:
-                put_url = url + '/JSSResource/computerextensionattributes/name/' + template.find('name').text
-                resp = await session.put(put_url, auth=auth, data=ET.tostring(template), headers=headers)
-            else:
-                post_url = url + '/JSSResource/computerextensionattributes/id/0'
-                resp = await session.post(post_url, auth=auth, data=ET.tostring(template), headers=headers)
+    async with semaphore:
+        with async_timeout.timeout(10):
+            template = await get_ea_template(session, url, user, passwd, ext_attr)
+            async with session.get(url + '/JSSResource/computerextensionattributes/name/' + template.find('name').text,
+                    auth=auth) as resp:
+                template.find('input_type/script').text = data
+                if args.verbose:
+                    print(ET.tostring(template))
+                if resp.status == 200:
+                    put_url = url + '/JSSResource/computerextensionattributes/name/' + template.find('name').text
+                    resp = await session.put(put_url, auth=auth, data=ET.tostring(template), headers=headers)
+                else:
+                    post_url = url + '/JSSResource/computerextensionattributes/id/0'
+                    resp = await session.post(post_url, auth=auth, data=ET.tostring(template), headers=headers)
     if resp.status in (201, 200):
         print('Uploaded Extension Attribute: %s' % ext_attr)
     return resp.status
@@ -80,35 +81,36 @@ async def get_ea_template(session, url, user, passwd, ext_attr):
     return template
 
 
-async def upload_scripts(session, url, user, passwd):
+async def upload_scripts(session, url, user, passwd, semaphore):
     mypath = dirname(realpath(__file__))
     scripts = [f.name for f in os.scandir(join(mypath, 'scripts'))
                if f.is_file() and f.name.split('.')[-1] in supported_script_extensions]
     tasks = []
     for script in scripts:
-        task = asyncio.ensure_future(upload_script(session, url, user, passwd, script))
+        task = asyncio.ensure_future(upload_script(session, url, user, passwd, script, semaphore))
         tasks.append(task)
     responses = await asyncio.gather(*tasks)
 
 
-async def upload_script(session, url, user, passwd, script):
+async def upload_script(session, url, user, passwd, script, semaphore):
     mypath = dirname(realpath(__file__))
     auth = aiohttp.BasicAuth(user, passwd)
     headers = {'content-type': 'application/xml'}
     with open(join(mypath, 'scripts/' + script), 'r') as f:
         data=f.read()
-    with async_timeout.timeout(10):
-        template = await get_script_template(session, url, user, passwd, script)
-        async with session.get(url + '/JSSResource/scripts/name/' + template.find('name').text,
-                auth=auth) as resp:
-            template.find('script_contents').text = data
-            # print(ET.tostring(template))
-            if resp.status == 200:
-                put_url = url + '/JSSResource/scripts/name/' + template.find('name').text
-                resp = await session.put(put_url, auth=auth, data=ET.tostring(template), headers=headers)
-            else:
-                post_url = url + '/JSSResource/scripts/id/0'
-                resp = await session.post(post_url, auth=auth, data=ET.tostring(template), headers=headers)
+    async with semaphore:
+        with async_timeout.timeout(10):
+            template = await get_script_template(session, url, user, passwd, script)
+            async with session.get(url + '/JSSResource/scripts/name/' + template.find('name').text,
+                    auth=auth) as resp:
+                template.find('script_contents').text = data
+                # print(ET.tostring(template))
+                if resp.status == 200:
+                    put_url = url + '/JSSResource/scripts/name/' + template.find('name').text
+                    resp = await session.put(put_url, auth=auth, data=ET.tostring(template), headers=headers)
+                else:
+                    post_url = url + '/JSSResource/scripts/id/0'
+                    resp = await session.post(post_url, auth=auth, data=ET.tostring(template), headers=headers)
     if resp.status in (201, 200):
         print('Uploaded script: %s' % script)
     return resp.status
@@ -140,9 +142,10 @@ async def get_script_template(session, url, user, passwd, script):
 
 
 async def main(args):
+    semaphore = asyncio.BoundedSemaphore(args.limit)
     async with aiohttp.ClientSession() as session:
-        await upload_scripts(session, args.url, args.username, args.password)
-        await upload_extension_attributes(session, args.url, args.username, args.password)
+        await upload_scripts(session, args.url, args.username, args.password, semaphore)
+        await upload_extension_attributes(session, args.url, args.username, args.password, semaphore)
 
 
 if __name__ == '__main__':
@@ -152,6 +155,7 @@ if __name__ == '__main__':
     parser.add_argument('--url')
     parser.add_argument('--username')
     parser.add_argument('--password')
+    parser.add_argument('--limit', type=int, default=25)
     parser.add_argument('--verbose', action='store_true')
     args = parser.parse_args()
 
