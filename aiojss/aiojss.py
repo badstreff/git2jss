@@ -27,40 +27,41 @@ class JSS(object):
             async with self.session.get(url, auth=self.auth) as resp:
                 if resp.status != 200:
                     raise NotFound
-                return await resp.text()
+                obj = await resp.text()
         elif name:
             url = base_url + f'/name/{name}'
             async with self.session.get(url, auth=self.auth) as resp:
                 if resp.status != 200:
                     raise NotFound
-                return await resp.text()
+                obj = await resp.text()
         else:
             async with self.session.get(base_url, auth=self.auth) as resp:
                 if resp.status != 200:
                     raise NotFound
-                return await resp.text()
+                obj = await resp.text()
+        return JSSObject(obj, self, endpoint=endpoint)
 
     async def _post_endpoint(self, endpoint, jss_object):
         base_url = self.url + f'/JSSResource/{endpoint}/id'
         headers = {'content-type': 'application/xml'}
         try:
-            await self._get_endpoint(endpoint, id=jss_object.id)
-            base_url += f'/{jss_object.id}'
-            print('script exist, updating')
-            print(jss_object.raw_xml())
-            print(base_url)
+            old = await self._get_endpoint(endpoint, name=jss_object.name)
+            base_url += f'/{old.id}'
             resp = await self.session.put(base_url,
                                           auth=self.auth,
                                           data=jss_object.raw_xml(),
                                           headers=headers)
-            print(resp.status)
-        except NotFound:
+        except (NotFound, AttributeError):
             base_url += '/0'
             print('script does not exist, creating')
-            self.session.post(base_url,
-                              auth=self.auth,
-                              data=jss_object.raw_xml(),
-                              headers=headers)
+            resp = await self.session.post(base_url,
+                                           auth=self.auth,
+                                           data=jss_object.raw_xml(),
+                                           headers=headers)
+        print(jss_object.raw_xml())
+        print(resp.status)
+        return resp.status
+
 
     async def scripts(self, id=None, name=None):
         data = await self._get_endpoint('scripts', id, name)
@@ -73,21 +74,18 @@ class JSS(object):
         return ExtensionAttribute(data, self)
 
 class JSSObject(object):
-    def __init__(self, xml, delegate=None):
+    def __init__(self, xml, delegate=None, endpoint=None):
         self._root = ElementTree.fromstring(xml)
         self.delegate = delegate
-
+        self.endpoint = None
     def __getattr__(self, name):
         return self._root.__getattr__(name)
-
-    def save(self):
-        raise NotImplementedError
-
+    async def save(self):
+        await self.delegate._post_endpoint(self.endpoint, self)
     def delete(self):
         raise NotImplementedError
-
     def raw_xml(self):
-        return ElementTree.tostring(self._root).decode("utf-8") 
+        return ElementTree.tostring(self._root).decode("utf-8")
 
 class Script(JSSObject):
     def __init__(self, xml, delegate):
@@ -101,7 +99,6 @@ class ExtensionAttribute(JSSObject):
     def __init__(self, xml, delegate):
         super().__init__(xml, delegate)
     async def save(self):
-        await self.delegate._post_endpoint('computerextensionattributes',
-                                           self)
+        await self.delegate._post_endpoint('computerextensionattributes', self)
     def delete(self):
         raise NotImplementedError

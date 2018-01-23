@@ -234,7 +234,7 @@ class Element:
             return r[0].text
         else:
             return r
-
+    
     def append(self, subelement):
         """Add *subelement* to the end of this element.
 

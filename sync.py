@@ -2,84 +2,66 @@
 
 import argparse
 import asyncio
-import os
+from os.path import basename, join, dirname, realpath
+from os import walk
 
-import async_timeout
-import aiohttp
 import uvloop
-# from os.path import dirname, join, realpath
 import aiojss
 
 supported_script_extensions = ('sh', 'py', 'pl', 'swift')
 supported_ea_extensions = ('sh', 'py', 'pl', 'swift')
-supported_profile_extensions = ('.mobileconfig', '.profile')
 
 
-# async def upload_scripts(session, url, user, passwd, semaphore):
-#     mypath = dirname(realpath(__file__))
-#     scripts = [f.name for f in os.scandir(join(mypath, 'scripts'))
-#                if f.is_file() and f.name.split('.')[-1] in supported_script_extensions]
-#     tasks = []
-#     for script in scripts:
-#         task = asyncio.ensure_future(upload_script(session, url, user, passwd, script, semaphore))
-#         tasks.append(task)
-#     responses = await asyncio.gather(*tasks)
-# 
-# 
-# async def upload_script(session, url, user, passwd, script, semaphore):
-#     mypath = dirname(realpath(__file__))
-#     auth = aiohttp.BasicAuth(user, passwd)
-#     headers = {'content-type': 'application/xml'}
-#     with open(join(mypath, 'scripts/' + script), 'r') as f:
-#         data=f.read()
-#     async with semaphore:
-#         with async_timeout.timeout(10):
-#             template = await get_script_template(session, url, user, passwd, script)
-#             async with session.get(url + '/JSSResource/scripts/name/' + template.find('name').text,
-#                     auth=auth) as resp:
-#                 template.find('script_contents').text = data
-#                 # print(ET.tostring(template))
-#                 if resp.status == 200:
-#                     put_url = url + '/JSSResource/scripts/name/' + template.find('name').text
-#                     resp = await session.put(put_url, auth=auth, data=ET.tostring(template), headers=headers)
-#                 else:
-#                     post_url = url + '/JSSResource/scripts/id/0'
-#                     resp = await session.post(post_url, auth=auth, data=ET.tostring(template), headers=headers)
-#     if resp.status in (201, 200):
-#         print('Uploaded script: %s' % script)
-#     return resp.status
-# 
-# 
-# async def get_script_template(session, url, user, passwd, script):
-#     auth = aiohttp.BasicAuth(user, passwd)
-#     mypath = dirname(realpath(__file__))
-#     try:
-#         with open(join(mypath, 'scripts/templates/' + script.split('.')[0] + '.xml'), 'r') as file:
-#             template = ET.fromstring(file.read())
-#     except FileNotFoundError:
-#         with async_timeout.timeout(10):
-#             async with session.get(url + '/JSSResource/scripts/name/' + script,
-#                     auth=auth) as resp:
-#                 if resp.status == 200:
-#                     async with session.get(url + '/JSSResource/scripts/name/' + script, auth=auth) as response:
-#                         template = ET.fromstring(await response.text())
-#                 else:
-#                     template = ET.parse(join(mypath, 'templates/script.xml')).getroot()
-#     # name is mandatory, so we use the filename if nothing is set in a template
-#     if args.verbose:
-#         print(ET.tostring(template))
-#     if template.find('name') is None:
-#         ET.SubElement(template, 'name').text = script
-#     elif template.find('name').text is '' or template.find('name').text is None:
-#         template.find('name').text = script
-#     return template
+async def sync_jssobject(jss, path):
+    # pylint: disable=invalid-name,broad-except
+    mypath = dirname(realpath(__file__))
+    template = None
+    try:
+        with open(path + '.xml', 'r') as f:
+            template = f.read()
+    except Exception:
+        pass
+    if 'scripts' in path:
+        if not template:
+            with open(join(mypath, 'templates/script.xml'), 'r') as f:
+                template = f.read()
+        jssobject = aiojss.Script(template, jss)
+    else:
+        if not template:
+            with open(join(mypath, 'templates/ea.xml'), 'r') as f:
+                template = f.read()
+        jssobject = aiojss.ExtensionAttribute(template, jss)
+    if jssobject.name == '':
+        jssobject.name = basename(path)
+    print('---name---')
+    jssobject.name = 'asdf'
+    print(jssobject.name)
+    print(jssobject.raw_xml())
+    await jssobject.save()
+
 
 async def main(args):
+    # pylint: disable=redefined-outer-name,invalid-name
+    mypath = dirname(realpath(__file__))
     semaphore = asyncio.BoundedSemaphore(args.limit)
+    tasks = []
     async with semaphore:
         jss = aiojss.JSS(args.url, args.username, args.password)
-        script = await jss.scripts(id=21)
-        await script.save()
+        for path in walk(join(mypath, 'scripts')):
+            for f in path[2]:
+                if f.split('.')[-1] in supported_script_extensions:
+                    print(f'syncing {f}')
+                    coroutine = sync_jssobject(jss, join(path[0], f))
+                    task = asyncio.ensure_future(coroutine)
+                    tasks.append(task)
+        for path in walk(join(mypath, 'extension_attributes')):
+            for f in path[2]:
+                if f.split('.')[-1] in supported_ea_extensions:
+                    print(f'syncing {f}')
+                    coroutine = sync_jssobject(jss, join(path[0], f))
+                    task = asyncio.ensure_future(coroutine)
+                    tasks.append(task)
+        await asyncio.gather(*tasks)
 
 
 if __name__ == '__main__':
