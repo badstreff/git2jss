@@ -1,0 +1,20 @@
+<script>
+	<name>Sample Script Uploaded by git2jss</name>
+	<category>System Tools</category>
+	<info>This Policy was uploaded by git2JSS</info>
+	<notes>Created By: Adam Furbee</notes>
+	<priority>After</priority>
+	<os_requirements/>
+	<parameters>
+		<parameter4>Parameter 4</parameter4>
+		<parameter5></parameter5>
+		<parameter6></parameter6>
+		<parameter7></parameter7>
+		<parameter8></parameter8>
+		<parameter9></parameter9>
+		<parameter10></parameter10>
+		<parameter11></parameter11>
+	</parameters>
+  <os_requirements/>
+	<script_contents/>
+</script>
