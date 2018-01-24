@@ -1,3 +1,1 @@
-from .aiojss import JSS
-from .aiojss import Script
-from .aiojss import ExtensionAttribute
+from .aiojss import JSS, Script, ExtensionAttribute

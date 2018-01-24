@@ -31,12 +31,8 @@ async def sync_jssobject(jss, path):
             with open(join(mypath, 'templates/ea.xml'), 'r') as f:
                 template = f.read()
         jssobject = aiojss.ExtensionAttribute(template, jss)
-    if jssobject.name == '':
+    if jssobject.name.text == '':
         jssobject.name = basename(path)
-    print('---name---')
-    jssobject.name = 'asdf'
-    print(jssobject.name)
-    print(jssobject.raw_xml())
     await jssobject.save()
 
 

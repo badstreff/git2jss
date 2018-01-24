@@ -223,18 +223,22 @@ class Element:
         #     assert iselement(element)
         self._children[index] = element
 
+    def __getattr__(self, attr):
+        # print(f'calling Element.__getattr__(self, {attr})')
+        r = []
+        for e in self._children:
+            if e.tag == attr:
+                r.append(e)
+        if r == []:
+            raise AttributeError
+        elif len(r) == 1:
+            return r[0]
+        else:
+            return r
+
     def __delitem__(self, index):
         del self._children[index]
 
-    def __getattr__(self, name):
-        r = self.findall(name)
-        if r == []:
-            raise AttributeError
-        elif len(r) == 1 and r[0].text:
-            return r[0].text
-        else:
-            return r
-    
     def append(self, subelement):
         """Add *subelement* to the end of this element.
 
