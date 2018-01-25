@@ -1,0 +1,4 @@
+[submodule "submodules/aiojss"]
+	path = submodules/aiojss
+	url = https://github.com/badstreff/aiojss
+	branch = master
