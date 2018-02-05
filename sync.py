@@ -143,9 +143,14 @@ async def get_script_template(session, url, user, passwd, script):
 
 async def main(args):
     semaphore = asyncio.BoundedSemaphore(args.limit)
-    async with aiohttp.ClientSession() as session:
-        await upload_scripts(session, args.url, args.username, args.password, semaphore)
-        await upload_extension_attributes(session, args.url, args.username, args.password, semaphore)
+    if args.allowinvalidssl:
+        async with aiohttp.ClientSession(connector=aiohttp.TCPConnector(verify_ssl=False)) as session:
+            await upload_scripts(session, args.url, args.username, args.password, semaphore)
+            await upload_extension_attributes(session, args.url, args.username, args.password, semaphore)
+    else:
+        async with aiohttp.ClientSession() as session:
+            await upload_scripts(session, args.url, args.username, args.password, semaphore)
+            await upload_extension_attributes(session, args.url, args.username, args.password, semaphore)
 
 
 if __name__ == '__main__':
@@ -157,6 +162,7 @@ if __name__ == '__main__':
     parser.add_argument('--password')
     parser.add_argument('--limit', type=int, default=25)
     parser.add_argument('--verbose', action='store_true')
+    parser.add_argument('--allowinvalidssl', action='store_true')
     args = parser.parse_args()
 
     loop = asyncio.get_event_loop()
