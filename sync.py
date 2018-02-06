@@ -144,19 +144,20 @@ async def get_script_template(session, url, user, passwd, script):
 async def main(args):
     semaphore = asyncio.BoundedSemaphore(args.limit)
     async with aiohttp.ClientSession() as session:
-        await upload_scripts(session, args.url, args.username, args.password, semaphore)
-        await upload_extension_attributes(session, args.url, args.username, args.password, semaphore)
-
+        async with aiohttp.ClientSession(connector=aiohttp.TCPConnector(verify_ssl=args.do_not_verify_ssl)) as session:
+            await upload_scripts(session, args.url, args.username, args.password, semaphore)
+            await upload_extension_attributes(session, args.url, args.username, args.password, semaphore)
 
 if __name__ == '__main__':
     asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
 
-    parser = argparse.ArgumentParser(description='Sync repo with JSS')
+    parser = argparse.ArgumentParser(description='Sync repo with JamfPro')
     parser.add_argument('--url')
     parser.add_argument('--username')
     parser.add_argument('--password')
     parser.add_argument('--limit', type=int, default=25)
     parser.add_argument('--verbose', action='store_true')
+    parser.add_argument('--do_not_verify_ssl', action='store_false')
     args = parser.parse_args()
 
     loop = asyncio.get_event_loop()
