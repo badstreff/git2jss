@@ -1,2 +1,5 @@
 *.pyc
 *__pycache__*
+.DS_Store
+.ropeproject
+setup.cfg
