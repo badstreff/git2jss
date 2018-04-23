@@ -1,6 +1,5 @@
 # git2jss
 
-🚧 *__Important:__ This project is under active development so some things might not work quite as expected and some of the documentation may be missing or incomplete. Check back frequently for updates. I am also looking for contributors, if you think you can help send me an email and I will get you commit access!* 🚧
 
 A fast asynchronous python library for syncing your scripts in git with your JSS easily. This allows admins to keep their script in a version control system for easy updating rather than googling and copy-pasting from resources that they find online.
 
@@ -27,4 +26,4 @@ The project can be ran ad-hoc with the example listed above, but ideally you set
 
 ## Contributing
 
-This project is still in it's early stages and not yet ready for production, but contributions and ideas are welcome.
+PR's are always welcome
