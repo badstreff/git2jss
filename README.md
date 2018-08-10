@@ -7,23 +7,36 @@ A fast asynchronous python library for syncing your scripts in git with your JSS
 ## Getting Started
 
 1. Fork the Project
-2. Install python version 3.6 or higher. (this is because of the async requirements)
-3. Run `python -m pip install -r requirements.txt`
-4. Run `./sync.py --url https://your.jss.com:8443 --username git2jss_admin --password your_password_here`
+2. Install [Python version 3.6](https://www.python.org/downloads/) or higher. (this is because of the async requirements)
+3. Run `python3.6 -m pip install -r requirements.txt` to install required modules
+4. Run `./download.py --url https://your.jss.url:8443 --username api_user --password potato` to download all scripts and extension attributes to the repository
+5. Run `./sync.py --url https://your.jss.url:8443 --username api_user  --password potato` to sync all scripts back to your JSS
 
-*Additional information can be found in the [Wiki](https://github.com/BadStreff/git2jss/wiki)*
+Optional flags for `download.py`:
+
+- `--do_not_verify_ssl` to skip ssl verification 
+- `--overwrite` to overwrite all scripts and extension attributes
+
+Optional flags for `sync.py`:
+
+- `--do_not_verify_ssl` to skip ssl verification 
+- `--overwrite` to overwrite all scripts and extension attributes
+- `--limit` to limit max connections (default=25)
+- `--verbose` to add additional logging
+- `--update_all` to upload all resources in `./extension_attributes` and `./scripts`
+- `--jenkins` to write a Jenkins file:`jenkins.properties` with `$scripts` and `$eas` and compare `$GIT_PREVIOUS_COMMIT` with `$GIT_COMMIT`
 
 
 ### Prerequisites
 
-git2jss requires `python 3.6` or higher and the python modules listed in `requirements.txt`
+git2jss requires [Python 3.6](https://www.python.org/downloads/) and the python modules listed in `requirements.txt`
 
 
 ## Deployment
 
-The project can be ran ad-hoc with the example listed above, but ideally you setup webhooks and integrate into a build server so each time a push is made to the repo your scripts are re-uploaded to the JSS.
+The project can be ran ad-hoc with the example listed above, but ideally you setup webhooks and integrate into a CI/CD pipeline so each time a push is made to the repo your scripts are re-uploaded to the JSS.
 
 
 ## Contributing
 
-PR's are always welcome
+PR's are always welcome!
