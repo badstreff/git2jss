@@ -102,7 +102,7 @@ def download_scripts(mode, overwrite=None,):
             ext = '.py'
 
         elif '#!/usr/bin/perl' in ET.tostring(tree.find(script_xml), encoding='unicode', method='text'):
-            ext = '.py'
+            ext = '.pl'
 
         else:
             print('No interpreter directive found for: ', tree.find('name').text)
