@@ -1,12 +1,10 @@
 #!/usr/bin/env python
-
+import getpass
 import requests
 from xml.etree import ElementTree as ET
 from xml.dom import minidom
 import os
 import argparse
-
-
 import urllib3
 
 # Suppress the warning in dev
@@ -51,23 +49,28 @@ def download_scripts(mode, overwrite=None,):
 
     # Get all IDs of resource type
     r = requests.get(args.url + '/JSSResource/%s' %resource, 
-        auth = (args.username, args.password), 
-        headers= {'Content-Type': 'application/xml'}, 
+        auth = (args.username, password), 
+        headers= {'Accept': 'application/xml','Content-Type': 'application/xml'}, 
         verify=args.do_not_verify_ssl)
+
+    # Basic error handling
+    if r.status_code != 200:
+        print("Something went wrong with the request, check your password and privileges and try again. \n \
+        It's also possible that the url is incorrect. \n \
+        Here is the HTTP Status code: %s" % r.status_code)
+        exit(1)
     tree = ET.fromstring(r.content) 
     resource_ids = [ e.text for e in tree.findall('.//id') ]
 
     # Download each resource and save to disk
     for resource_id in resource_ids:
-
         r = requests.get(args.url + '/JSSResource/%s/id/%s' % (resource,resource_id), 
-            auth = (args.username, args.password), 
-            headers= {'Content-Type': 'application/xml'}, verify=args.do_not_verify_ssl)
+            auth = (args.username, password), 
+            headers= {'Accept': 'application/xml','Content-Type': 'application/xml'}, verify=args.do_not_verify_ssl)
         tree = ET.fromstring(r.content)
 
         if mode == 'ea':
             if tree.find('input_type/type').text != 'script': 
-                print(tree.find(script_xml).text)
                 print('No script found in: %s' % tree.find('name').text)
                 continue
 
@@ -136,6 +139,12 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     print("This tool has been moved under the tools/ directory, please use the updated path as this file will be removed in future versions")
+    
+    # Ask for password if not supplied via command line args
+    if args.password:
+        password = args.password
+    else:   
+        password = getpass.getpass()
 
     # Run script download for extension attributes
     download_scripts(overwrite=args.overwrite, mode='ea')
