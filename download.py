@@ -15,13 +15,13 @@ urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 mypath = os.path.dirname(os.path.realpath(__file__))
 
 def download_scripts(mode, overwrite=None,):
-    """ Downloads Scripts to ./scripts and Extension Attributes to ./extenstion_attributes
+    """ Downloads Scripts to ./scripts and Extension Attributes to ./extension_attributes
 
     Folder Structure:
     ./scripts/script_name/script.sh
     ./scripts/script_name/script.xml
-    ./extenstion_attributes/ea_name/ea.sh
-    ./extenstion_attributes/ea_name/ea.xml    
+    ./extension_attributes/ea_name/ea.sh
+    ./extension_attributes/ea_name/ea.xml    
 
     Usage: 
     
@@ -132,7 +132,7 @@ if __name__ == '__main__':
     parser.add_argument('--username')
     parser.add_argument('--password')
     parser.add_argument('--overwrite', action='store_true') # Overwrites existing files
-    parser.add_argument('--do_not_verify_ssl', action='store_false') # Skips SSL verifcation 
+    parser.add_argument('--do_not_verify_ssl', action='store_false') # Skips SSL verification 
     args = parser.parse_args()
 
     # Run script download for extension attributes
