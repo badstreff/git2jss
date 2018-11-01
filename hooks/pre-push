@@ -38,6 +38,7 @@ branch=$(git symbolic-ref HEAD | sed -e 's,.*/\(.*\),\1,')
 
 
 # Attempt the push to dev
+echo "This hook has been moved under the tools/hooks/ directory, please use the updated path as this hook will be removed in future versions"
 ./sync.py --url "$DEV_URL" --username "$DEV_ACCT" --password "$DEV_PASS"
 err=$?
 
@@ -50,3 +51,4 @@ else
     echo "Remote not updated, please correct the errors before continuing"
     exit 1
 fi
+

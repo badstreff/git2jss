@@ -3,6 +3,8 @@
 ## Looks for the existance of files in both folders
 ###################################################################################
 
+echo "This tool has been moved under the tools/ci_tests/ directory, please use the updated path as this file will be removed in future versions"
+
 #Load up some variables
 #Define scripts and templates folders
 scripts=$(ls -p scripts | grep -v '/$' | sed -e 's/\..*$//')
