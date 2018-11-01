@@ -75,7 +75,7 @@ def download_scripts(mode, overwrite=None,):
                 continue
 
         # Determine resource path (folder name)
-        resource_path = os.path.join(mypath, download_path ,tree.find('name').text)
+        resource_path = os.path.join(mypath, '..', download_path ,tree.find('name').text)
 
         # Check to see if it exists
         if os.path.exists(resource_path):
