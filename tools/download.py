@@ -1,12 +1,10 @@
 #!/usr/bin/env python
-
+import getpass
 import requests
 from xml.etree import ElementTree as ET
 from xml.dom import minidom
 import os
 import argparse
-
-
 import urllib3
 
 # Suppress the warning in dev
@@ -15,13 +13,13 @@ urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 mypath = os.path.dirname(os.path.realpath(__file__))
 
 def download_scripts(mode, overwrite=None,):
-    """ Downloads Scripts to ./scripts and Extension Attributes to ./extenstion_attributes
+    """ Downloads Scripts to ./scripts and Extension Attributes to ./extension_attributes
 
     Folder Structure:
     ./scripts/script_name/script.sh
     ./scripts/script_name/script.xml
-    ./extenstion_attributes/ea_name/ea.sh
-    ./extenstion_attributes/ea_name/ea.xml    
+    ./extension_attributes/ea_name/ea.sh
+    ./extension_attributes/ea_name/ea.xml    
 
     Usage: 
     
@@ -51,28 +49,33 @@ def download_scripts(mode, overwrite=None,):
 
     # Get all IDs of resource type
     r = requests.get(args.url + '/JSSResource/%s' %resource, 
-        auth = (args.username, args.password), 
-        headers= {'Content-Type': 'application/xml'}, 
+        auth = (args.username, password), 
+        headers= {'Accept': 'application/xml','Content-Type': 'application/xml'}, 
         verify=args.do_not_verify_ssl)
+
+    # Basic error handling
+    if r.status_code != 200:
+        print("Something went wrong with the request, check your password and privileges and try again. \n \
+        It's also possible that the url is incorrect. \n \
+        Here is the HTTP Status code: %s" % r.status_code)
+        exit(1)
     tree = ET.fromstring(r.content) 
     resource_ids = [ e.text for e in tree.findall('.//id') ]
 
     # Download each resource and save to disk
     for resource_id in resource_ids:
-
         r = requests.get(args.url + '/JSSResource/%s/id/%s' % (resource,resource_id), 
-            auth = (args.username, args.password), 
-            headers= {'Content-Type': 'application/xml'}, verify=args.do_not_verify_ssl)
+            auth = (args.username, password), 
+            headers= {'Accept': 'application/xml','Content-Type': 'application/xml'}, verify=args.do_not_verify_ssl)
         tree = ET.fromstring(r.content)
 
         if mode == 'ea':
             if tree.find('input_type/type').text != 'script': 
-                print(tree.find(script_xml).text)
                 print('No script found in: %s' % tree.find('name').text)
                 continue
 
         # Determine resource path (folder name)
-        resource_path = os.path.join(mypath, download_path ,tree.find('name').text)
+        resource_path = os.path.join(mypath, '..', download_path ,tree.find('name').text)
 
         # Check to see if it exists
         if os.path.exists(resource_path):
@@ -102,7 +105,7 @@ def download_scripts(mode, overwrite=None,):
             ext = '.py'
 
         elif '#!/usr/bin/perl' in ET.tostring(tree.find(script_xml), encoding='unicode', method='text'):
-            ext = '.py'
+            ext = '.pl'
 
         else:
             print('No interpreter directive found for: ', tree.find('name').text)
@@ -132,8 +135,14 @@ if __name__ == '__main__':
     parser.add_argument('--username')
     parser.add_argument('--password')
     parser.add_argument('--overwrite', action='store_true') # Overwrites existing files
-    parser.add_argument('--do_not_verify_ssl', action='store_false') # Skips SSL verifcation 
+    parser.add_argument('--do_not_verify_ssl', action='store_false') # Skips SSL verification 
     args = parser.parse_args()
+    
+    # Ask for password if not supplied via command line args
+    if args.password:
+        password = args.password
+    else:   
+        password = getpass.getpass()
 
     # Run script download for extension attributes
     download_scripts(overwrite=args.overwrite, mode='ea')
