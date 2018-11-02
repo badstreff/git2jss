@@ -137,8 +137,6 @@ if __name__ == '__main__':
     parser.add_argument('--overwrite', action='store_true') # Overwrites existing files
     parser.add_argument('--do_not_verify_ssl', action='store_false') # Skips SSL verification 
     args = parser.parse_args()
-
-    print("This tool has been moved under the tools/ directory, please use the updated path as this file will be removed in future versions")
     
     # Ask for password if not supplied via command line args
     if args.password:
