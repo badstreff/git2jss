@@ -14,8 +14,8 @@ import xml.etree.ElementTree as ET
 # Use this variable to add a Slack emoji in front of each item if you use a post-build action for a Slack custom message
 slack_emoji = ":white_check_mark: "
 
-supported_script_extensions = ('sh', 'py', 'pl', 'swift')
-supported_ea_extensions = ('sh', 'py', 'pl', 'swift')
+supported_script_extensions = ('sh', 'py', 'pl', 'swift', 'rb')
+supported_ea_extensions = ('sh', 'py', 'pl', 'swift', 'rb')
 supported_profile_extensions = ('.mobileconfig', '.profile')
 
 
