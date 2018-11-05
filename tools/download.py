@@ -94,8 +94,14 @@ def download_scripts(mode, overwrite=None,):
         # Determine the file extension
         if '#!/bin/sh' in ET.tostring(tree.find(script_xml), encoding='unicode', method='text'):
             ext = '.sh'
-        
+
+        elif '#!/usr/bin/env sh' in ET.tostring(tree.find(script_xml), encoding='unicode', method='text'):
+            ext = '.sh'
+
         elif '#!/bin/bash' in ET.tostring(tree.find(script_xml), encoding='unicode', method='text'):
+            ext = '.sh'
+
+        elif '#!/usr/bin/env bash' in ET.tostring(tree.find(script_xml), encoding='unicode', method='text'):
             ext = '.sh'
 
         elif '#!/usr/bin/python' in ET.tostring(tree.find(script_xml), encoding='unicode', method='text'):
@@ -106,6 +112,9 @@ def download_scripts(mode, overwrite=None,):
 
         elif '#!/usr/bin/perl' in ET.tostring(tree.find(script_xml), encoding='unicode', method='text'):
             ext = '.pl'
+
+        elif '#!/usr/bin/ruby' in ET.tostring(tree.find(script_xml), encoding='unicode', method='text'):
+            ext = '.rb'
 
         else:
             print('No interpreter directive found for: ', tree.find('name').text)
