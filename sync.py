@@ -127,7 +127,7 @@ async def upload_extension_attribute(session, url, user, passwd, ext_attr, semap
     with open(join(mypath, 'extension_attributes', ext_attr, script_file[0]), 'r') as f:
         data=f.read()
     async with semaphore:
-        with async_timeout.timeout(10):
+        with async_timeout.timeout(args.timeout):
             template = await get_ea_template(session, url, user, passwd, ext_attr)
             async with session.get(url + '/JSSResource/computerextensionattributes/name/' + template.find('name').text,
                     auth=auth, headers=headers) as resp:
@@ -157,7 +157,7 @@ async def get_ea_template(session, url, user, passwd, ext_attr):
         with open(join(mypath, 'extension_attributes', ext_attr, xml_file[0]), 'r') as file:
             template = ET.fromstring(file.read())
     except IndexError:
-        with async_timeout.timeout(10):
+        with async_timeout.timeout(args.timeout):
             headers = {'Accept': 'application/xml','Content-Type':'application/xml'}
             async with session.get(url + '/JSSResource/computerextensionattributes/name/' + ext_attr,
                     auth=auth, headers=headers) as resp:
@@ -211,7 +211,7 @@ async def upload_script(session, url, user, passwd, script, semaphore):
     with open(join(mypath, 'scripts', script, script_file[0]), 'r') as f:
         data=f.read()
     async with semaphore:
-        with async_timeout.timeout(10):
+        with async_timeout.timeout(args.timeout):
             template = await get_script_template(session, url, user, passwd, script)
             async with session.get(url + '/JSSResource/scripts/name/' + template.find('name').text,
                     auth=auth, headers=headers) as resp:
@@ -235,7 +235,7 @@ async def get_script_template(session, url, user, passwd, script):
         with open(join(mypath, 'scripts', script, xml_file[0]), 'r') as file:
             template = ET.fromstring(file.read())
     except IndexError:
-        with async_timeout.timeout(10):
+        with async_timeout.timeout(args.timeout):
             headers = {'Accept': 'application/xml','Content-Type':'application/xml'}
             async with session.get(url + '/JSSResource/scripts/name/' + script,
                     auth=auth, headers=headers) as resp:
@@ -269,6 +269,7 @@ if __name__ == '__main__':
     parser.add_argument('--username')
     parser.add_argument('--password')
     parser.add_argument('--limit', type=int, default=25)
+    parser.add_argument('--timeout', type=int, default=60)
     parser.add_argument('--verbose', action='store_true')
     parser.add_argument('--do_not_verify_ssl', action='store_false')
     parser.add_argument('--update_all', action='store_true')
