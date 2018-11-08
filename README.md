@@ -24,7 +24,7 @@ Optional flags for `sync.py`:
 - `--do_not_verify_ssl` to skip ssl verification 
 - `--overwrite` to overwrite all scripts and extension attributes
 - `--limit` to limit max connections (default=25)
-- `--timeout` to limit max connections (default=25)
+- `--timeout` to limit max connections (default=60)
 - `--verbose` to add additional logging
 - `--update_all` to upload all resources in `./extension_attributes` and `./scripts`
 - `--jenkins` to write a Jenkins file:`jenkins.properties` with `$scripts` and `$eas` and compare `$GIT_PREVIOUS_COMMIT` with `$GIT_COMMIT`
