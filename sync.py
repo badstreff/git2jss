@@ -1,14 +1,23 @@
-#!/usr/bin/env python3.6
-
+#!/usr/bin/env python
+import getpass
 import argparse
 import asyncio
 import async_timeout
 import aiohttp
 import uvloop
-
+import warnings
 import os
+import sys
 from os.path import dirname, join, realpath
 import xml.etree.ElementTree as ET
+
+import logging
+logging.basicConfig(
+    level=logging.DEBUG,
+    format='%(levelname)7s: %(message)s',
+    stream=sys.stderr,
+)
+LOG = logging.getLogger('')
 
 # The Jenkins file will contain a list of changes scripts and eas in $scripts and $eas. 
 # Use this variable to add a Slack emoji in front of each item if you use a post-build action for a Slack custom message
@@ -86,17 +95,19 @@ async def upload_profiles(session):
 async def upload_extension_attributes(session, url, user, passwd, semaphore):
     mypath = dirname(realpath(__file__))
 
-    if len(changed_ext_attrs) == 0:
+    if len(changed_ext_attrs) == 0 and not args.update_all:
         print('No Changes in Extension Attributes')
         return
-
-    if args.update_all:
-        ext_attrs = [f.name for f in os.scandir(join(mypath, 'extension_attributes'))
-                if f.is_dir() and f.name is not 'templates']
 
     else:
         ext_attrs = [f.name for f in os.scandir(join(mypath, 'extension_attributes'))
                 if f.is_dir() and f.name is not 'templates' and f.name in changed_ext_attrs]
+
+    if args.update_all:
+        print("Copying all extension attributes...")
+        ext_attrs = [f.name for f in os.scandir(join(mypath, 'extension_attributes'))
+                if f.is_dir() and f.name is not 'templates']
+
     tasks = []
     for ea in ext_attrs:
         task = asyncio.ensure_future(upload_extension_attribute(session, url, user, passwd, ea, semaphore))
@@ -107,7 +118,7 @@ async def upload_extension_attributes(session, url, user, passwd, semaphore):
 async def upload_extension_attribute(session, url, user, passwd, ext_attr, semaphore):
     mypath = dirname(realpath(__file__))
     auth = aiohttp.BasicAuth(user, passwd)
-    headers = {'content-type': 'application/xml'}
+    headers = {'Accept': 'application/xml','Content-Type':'application/xml'}
     # Get the script files within the folder, we'll only use script_file[0] in case there are multiple files
     script_file = [ f.name for f in os.scandir(join('extension_attributes', ext_attr)) if f.is_file() and f.name.split('.')[-1] in supported_ea_extensions]
     if script_file == []:
@@ -119,7 +130,7 @@ async def upload_extension_attribute(session, url, user, passwd, ext_attr, semap
         with async_timeout.timeout(10):
             template = await get_ea_template(session, url, user, passwd, ext_attr)
             async with session.get(url + '/JSSResource/computerextensionattributes/name/' + template.find('name').text,
-                    auth=auth) as resp:
+                    auth=auth, headers=headers) as resp:
                 template.find('input_type/script').text = data
                 if args.verbose:
                     print(ET.tostring(template))
@@ -147,10 +158,11 @@ async def get_ea_template(session, url, user, passwd, ext_attr):
             template = ET.fromstring(file.read())
     except IndexError:
         with async_timeout.timeout(10):
+            headers = {'Accept': 'application/xml','Content-Type':'application/xml'}
             async with session.get(url + '/JSSResource/computerextensionattributes/name/' + ext_attr,
-                    auth=auth) as resp:
+                    auth=auth, headers=headers) as resp:
                 if resp.status == 200:
-                    async with session.get(url + '/JSSResource/computerextensionattributes/name/' + ext_attr, auth=auth) as response:
+                    async with session.get(url + '/JSSResource/computerextensionattributes/name/' + ext_attr, auth=auth, headers=headers) as response:
                         template = ET.fromstring(await response.text())
                 else:
                     template = ET.parse(join(mypath, 'templates/ea.xml')).getroot()
@@ -166,17 +178,20 @@ async def get_ea_template(session, url, user, passwd, ext_attr):
 
 async def upload_scripts(session, url, user, passwd, semaphore):
     mypath = dirname(realpath(__file__))
-
-    if len(changed_scripts) == 0:
+ 
+    if len(changed_scripts) == 0 and not args.update_all:
         print('No Changes in Scripts')
         return
 
-    if args.update_all:
-        scripts = [f.name for f in os.scandir(join(mypath, 'scripts'))
-                if f.is_dir() and f.name is not 'templates']
     else:
         scripts = [f.name for f in os.scandir(join(mypath, 'scripts'))
                 if f.is_dir() and f.name is not 'templates'  and f.name in changed_scripts]
+
+    if args.update_all:
+        print('Copying all scripts...')
+        scripts = [f.name for f in os.scandir(join(mypath, 'scripts'))
+                if f.is_dir() and f.name is not 'templates']
+
     tasks = []
     for script in scripts:
         task = asyncio.ensure_future(upload_script(session, url, user, passwd, script, semaphore))
@@ -184,10 +199,11 @@ async def upload_scripts(session, url, user, passwd, semaphore):
     responses = await asyncio.gather(*tasks)
 
 
+
 async def upload_script(session, url, user, passwd, script, semaphore):
     mypath = dirname(realpath(__file__))
     auth = aiohttp.BasicAuth(user, passwd)
-    headers = {'content-type': 'application/xml'}
+    headers = {'Accept': 'application/xml','Content-Type':'application/xml'}
     script_file = [ f.name for f in os.scandir(join('scripts', script)) if f.is_file() and f.name.split('.')[-1] in supported_script_extensions]
     if script_file == []:
         print('Warning: No script file found in scripts/%s' % script)
@@ -198,7 +214,7 @@ async def upload_script(session, url, user, passwd, script, semaphore):
         with async_timeout.timeout(10):
             template = await get_script_template(session, url, user, passwd, script)
             async with session.get(url + '/JSSResource/scripts/name/' + template.find('name').text,
-                    auth=auth) as resp:
+                    auth=auth, headers=headers) as resp:
                 template.find('script_contents').text = data
                 if resp.status == 200:
                     put_url = url + '/JSSResource/scripts/name/' + template.find('name').text
@@ -220,10 +236,11 @@ async def get_script_template(session, url, user, passwd, script):
             template = ET.fromstring(file.read())
     except IndexError:
         with async_timeout.timeout(10):
+            headers = {'Accept': 'application/xml','Content-Type':'application/xml'}
             async with session.get(url + '/JSSResource/scripts/name/' + script,
-                    auth=auth) as resp:
+                    auth=auth, headers=headers) as resp:
                 if resp.status == 200:
-                    async with session.get(url + '/JSSResource/scripts/name/' + script, auth=auth) as response:
+                    async with session.get(url + '/JSSResource/scripts/name/' + script, auth=auth, headers=headers) as response:
                         template = ET.fromstring(await response.text())
                 else:
                     template = ET.parse(join(mypath, 'templates/script.xml')).getroot()
@@ -240,9 +257,9 @@ async def get_script_template(session, url, user, passwd, script):
 async def main(args):
     semaphore = asyncio.BoundedSemaphore(args.limit)
     async with aiohttp.ClientSession() as session:
-        async with aiohttp.ClientSession(connector=aiohttp.TCPConnector(verify_ssl=args.do_not_verify_ssl)) as session:
-            await upload_scripts(session, args.url, args.username, args.password, semaphore)
-            await upload_extension_attributes(session, args.url, args.username, args.password, semaphore)
+        async with aiohttp.ClientSession(connector=aiohttp.TCPConnector(ssl=args.do_not_verify_ssl)) as session:
+            await upload_scripts(session, args.url, args.username, password, semaphore)
+            await upload_extension_attributes(session, args.url, args.username, password, semaphore)
 
 if __name__ == '__main__':
     asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
@@ -267,5 +284,17 @@ if __name__ == '__main__':
     if args.jenkins:
         write_jenkins_file()
 
+    # Ask for password if not supplied via command line args
+    if args.password:
+        password = args.password
+    else:   
+        password = getpass.getpass()
+
     loop = asyncio.get_event_loop()
+
+    if args.verbose:
+        loop.set_debug(True)
+        loop.slow_callback_duration = 0.001
+        warnings.simplefilter('always', ResourceWarning)
+
     loop.run_until_complete(main(args))
