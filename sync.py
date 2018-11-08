@@ -147,6 +147,9 @@ async def upload_extension_attribute(session, url, user, passwd, ext_attr, semap
         print('EA Name: ',template.find('name').text)
     if resp.status in (201, 200):
         print('Uploaded Extension Attribute: %s' % template.find('name').text)
+    else:
+        print('Error uploading script: %s' % template.find('name').text)
+        print('Error: %s' % resp.status)
     return resp.status
 
 async def get_ea_template(session, url, user, passwd, ext_attr):
@@ -224,6 +227,9 @@ async def upload_script(session, url, user, passwd, script, semaphore):
                     resp = await session.post(post_url, auth=auth, data=ET.tostring(template), headers=headers)
     if resp.status in (201, 200):
         print('Uploaded script: %s' % template.find('name').text)
+    else:
+        print('Error uploading script: %s' % template.find('name').text)
+        print('Error: %s' % resp.status)
     return resp.status
 
 
