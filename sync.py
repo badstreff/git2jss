@@ -26,6 +26,7 @@ slack_emoji = ":white_check_mark: "
 supported_script_extensions = ('sh', 'py', 'pl', 'swift', 'rb')
 supported_ea_extensions = ('sh', 'py', 'pl', 'swift', 'rb')
 supported_profile_extensions = ('.mobileconfig', '.profile')
+categories = []
 
 
 def check_for_changes():
@@ -172,6 +173,11 @@ async def get_ea_template(session, url, user, passwd, ext_attr):
     # name is mandatory, so we use the foldername if nothing is set in a template
     if args.verbose:
         print(ET.tostring(template))
+    if template.find('category') and template.find('category').text not in categories:
+        ET.SubElement(template, 'category').text = 'None'
+        if args.verbose:
+            c = template.find('category').text
+            print(f'WARNING: Unable to find category {c} in the JSS, setting to None')
     if template.find('name') is None:
         ET.SubElement(template, 'name').text = ext_attr
     elif template.find('name').text is '' or template.find('name').text is None:
@@ -200,7 +206,6 @@ async def upload_scripts(session, url, user, passwd, semaphore):
         task = asyncio.ensure_future(upload_script(session, url, user, passwd, script, semaphore))
         tasks.append(task)
     responses = await asyncio.gather(*tasks)
-
 
 
 async def upload_script(session, url, user, passwd, script, semaphore):
@@ -253,6 +258,11 @@ async def get_script_template(session, url, user, passwd, script):
     # name is mandatory, so we use the filename if nothing is set in a template
     if args.verbose:
         print(ET.tostring(template))
+    if template.find('category') is not None and template.find('category').text not in categories:
+        c = template.find('category').text
+        template.remove(template.find('category'))
+        if args.verbose:
+            print(f'WARNING: Unable to find category "{c}" in the JSS, setting to None')
     if template.find('name') is None:
         ET.SubElement(template, 'name').text = script
     elif template.find('name').text is '' or template.find('name').text is None:
@@ -260,12 +270,25 @@ async def get_script_template(session, url, user, passwd, script):
     return template
 
 
+async def get_existing_categories(session, url, user, passwd, semaphore):
+    auth = aiohttp.BasicAuth(user, passwd)
+    headers = {'content-type': 'application/xml'}
+    async with semaphore:
+        with async_timeout.timeout(args.timeout):
+            async with session.get(url + '/JSSResource/categories',
+                                   auth=auth) as resp:
+                if resp.status in (201, 200):
+                    return [c.find('name').text for c in [e for e in ET.fromstring(await resp.text()).findall('category')]]
+    return []
+
 async def main(args):
+    global categories
     semaphore = asyncio.BoundedSemaphore(args.limit)
     async with aiohttp.ClientSession() as session:
-        async with aiohttp.ClientSession(connector=aiohttp.TCPConnector(ssl=args.do_not_verify_ssl)) as session:
-            await upload_scripts(session, args.url, args.username, password, semaphore)
-            await upload_extension_attributes(session, args.url, args.username, password, semaphore)
+        async with aiohttp.ClientSession(connector=aiohttp.TCPConnector(verify_ssl=args.do_not_verify_ssl)) as session:
+            categories = await get_existing_categories(session, args.url, args.username, args.password, semaphore)
+            await upload_scripts(session, args.url, args.username, args.password, semaphore)
+            await upload_extension_attributes(session, args.url, args.username, args.password, semaphore)
 
 if __name__ == '__main__':
     asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
@@ -294,7 +317,7 @@ if __name__ == '__main__':
     # Ask for password if not supplied via command line args
     if args.password:
         password = args.password
-    else:   
+    else:
         password = getpass.getpass()
 
     loop = asyncio.get_event_loop()
