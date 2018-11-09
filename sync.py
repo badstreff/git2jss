@@ -274,7 +274,7 @@ async def get_existing_categories(session, url, user, passwd, semaphore):
     auth = aiohttp.BasicAuth(user, passwd)
     headers = {'content-type': 'application/xml'}
     async with semaphore:
-        with async_timeout.timeout(10):
+        with async_timeout.timeout(args.timeout):
             async with session.get(url + '/JSSResource/categories',
                                    auth=auth) as resp:
                 if resp.status in (201, 200):
