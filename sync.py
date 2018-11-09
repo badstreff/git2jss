@@ -190,7 +190,7 @@ async def upload_scripts(session, url, user, passwd, semaphore):
  
     if len(changed_scripts) == 0 and not args.update_all:
         print('No Changes in Scripts')
-        # return
+        return
 
     else:
         scripts = [f.name for f in os.scandir(join(mypath, 'scripts'))
