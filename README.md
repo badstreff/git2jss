@@ -4,7 +4,6 @@
 
 A fast asynchronous python library for syncing your scripts in git with your JSS easily. This allows admins to keep their script in a version control system for easy updating rather than googling and copy-pasting from resources that they find online.
 
-
 ## Getting Started
 1.  Fork the Project
 2.  Install [Python version 3.6](https://www.python.org/downloads/) or higher. (this is because of the async requirements)
