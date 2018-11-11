@@ -1,5 +1,8 @@
 # git2jss
 
+[![Codacy Badge](https://api.codacy.com/project/badge/Grade/f95e26803b134f6ab7dc258af346f832)](https://app.codacy.com/app/adam-furbee/git2jss?utm_source=github.com&utm_medium=referral&utm_content=BadStreff/git2jss&utm_campaign=Badge_Grade_Dashboard)
+
+
 
 A fast asynchronous python library for syncing your scripts in git with your JSS easily. This allows admins to keep their script in a version control system for easy updating rather than googling and copy-pasting from resources that they find online.
 
