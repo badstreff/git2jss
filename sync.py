@@ -380,7 +380,7 @@ async def main():
     async with aiohttp.ClientSession() as session:
         async with aiohttp.ClientSession(
                 connector=aiohttp.TCPConnector(
-                    verify_ssl=args.do_not_verify_ssl)) as session:
+                    ssl=args.do_not_verify_ssl)) as session:
             CATEGORIES = await get_existing_categories(
                 session, args.url, args.username, args.password, semaphore)
             await upload_scripts(session, args.url, args.username,
