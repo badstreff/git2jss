@@ -6,4 +6,3 @@ making a change.
 
 Please note we have a [code of conduct](https://github.com/BadStreff/git2jss/blob/master/CODE_OF_CONDUCT.md),
 please follow it in all your interactions with the project.
-

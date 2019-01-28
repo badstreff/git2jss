@@ -1,0 +1,6 @@
+---
+exclude_paths:
+  - 'aiojss/**'
+  - 'tools/**'
+  - 'scripts/**'
+  - 'extension_attributes/**'
