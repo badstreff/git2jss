@@ -91,36 +91,28 @@ def download_scripts(mode, overwrite=None,):
 
         print('Saving: ', tree.find('name').text)
 
-        # Determine the file extension
-        if '#!/bin/sh' in ET.tostring(tree.find(script_xml), encoding='unicode', method='text'):
+        # Create script string, and determine the file extension
+        xmlstr = ET.tostring(tree.find(script_xml), encoding='unicode', method='text').replace('\r','')
+        if xmlstr.startswith('#!/bin/sh'):
             ext = '.sh'
-
-        elif '#!/usr/bin/env sh' in ET.tostring(tree.find(script_xml), encoding='unicode', method='text'):
+        elif xmlstr.startswith('#!/usr/bin/env sh'):
             ext = '.sh'
-
-        elif '#!/bin/bash' in ET.tostring(tree.find(script_xml), encoding='unicode', method='text'):
+        elif xmlstr.startswith('#!/bin/bash'):
             ext = '.sh'
-
-        elif '#!/usr/bin/env bash' in ET.tostring(tree.find(script_xml), encoding='unicode', method='text'):
+        elif xmlstr.startswith('#!/usr/bin/env bash'):
             ext = '.sh'
-
-        elif '#!/usr/bin/python' in ET.tostring(tree.find(script_xml), encoding='unicode', method='text'):
+        elif xmlstr.startswith('#!/usr/bin/python'):
             ext = '.py'
-
-        elif '#!/usr/bin/env python' in ET.tostring(tree.find(script_xml), encoding='unicode', method='text'):
+        elif xmlstr.startswith('#!/usr/bin/env python'):
             ext = '.py'
-
-        elif '#!/usr/bin/perl' in ET.tostring(tree.find(script_xml), encoding='unicode', method='text'):
+        elif xmlstr.startswith('#!/usr/bin/perl'):
             ext = '.pl'
-
-        elif '#!/usr/bin/ruby' in ET.tostring(tree.find(script_xml), encoding='unicode', method='text'):
+        elif xmlstr.startswith('#!/usr/bin/ruby'):
             ext = '.rb'
-
         else:
             print('No interpreter directive found for: ', tree.find('name').text)
             ext = '.sh' # Call it sh for now so the uploader detects it
-        
-        xmlstr = ET.tostring(tree.find(script_xml), encoding='unicode', method='text').replace('\r','')
+
         with open(os.path.join(resource_path, '%s%s' % (mode,ext)), 'w') as f:
             f.write(xmlstr)
 
