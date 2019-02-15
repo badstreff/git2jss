@@ -1,0 +1,7 @@
+.DS_Store
+
+# Virtual environment for Python 3
+venv/*
+
+# Compiled Python
+*.pyc
