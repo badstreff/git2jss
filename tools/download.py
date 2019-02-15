@@ -19,19 +19,19 @@ def download_scripts(mode, overwrite=None,):
     ./scripts/script_name/script.sh
     ./scripts/script_name/script.xml
     ./extension_attributes/ea_name/ea.sh
-    ./extension_attributes/ea_name/ea.xml    
+    ./extension_attributes/ea_name/ea.xml
 
-    Usage: 
-    
+    Usage:
+
     Download all Extension Attributes from JSS:
     download_scripts('ea','overwrite=False)
 
     Download all Extension Attributes from JSS:
     download_scripts('script','overwrite=False)
-    
+
     Params:
     mode = 'script' or 'ea'
-    overwrite = True/False 
+    overwrite = True/False
     Returns: None
     """
 
@@ -48,9 +48,9 @@ def download_scripts(mode, overwrite=None,):
 
 
     # Get all IDs of resource type
-    r = requests.get(args.url + '/JSSResource/%s' %resource, 
-        auth = (args.username, password), 
-        headers= {'Accept': 'application/xml','Content-Type': 'application/xml'}, 
+    r = requests.get(args.url + '/JSSResource/%s' %resource,
+        auth = (args.username, password),
+        headers= {'Accept': 'application/xml','Content-Type': 'application/xml'},
         verify=args.do_not_verify_ssl)
 
     # Basic error handling
@@ -59,18 +59,18 @@ def download_scripts(mode, overwrite=None,):
         It's also possible that the url is incorrect. \n \
         Here is the HTTP Status code: %s" % r.status_code)
         exit(1)
-    tree = ET.fromstring(r.content) 
+    tree = ET.fromstring(r.content)
     resource_ids = [ e.text for e in tree.findall('.//id') ]
 
     # Download each resource and save to disk
     for resource_id in resource_ids:
-        r = requests.get(args.url + '/JSSResource/%s/id/%s' % (resource,resource_id), 
-            auth = (args.username, password), 
+        r = requests.get(args.url + '/JSSResource/%s/id/%s' % (resource,resource_id),
+            auth = (args.username, password),
             headers= {'Accept': 'application/xml','Content-Type': 'application/xml'}, verify=args.do_not_verify_ssl)
         tree = ET.fromstring(r.content)
 
         if mode == 'ea':
-            if tree.find('input_type/type').text != 'script': 
+            if tree.find('input_type/type').text != 'script':
                 print('No script found in: %s' % tree.find('name').text)
                 continue
 
@@ -86,7 +86,7 @@ def download_scripts(mode, overwrite=None,):
                 continue
 
 
-        else:    # Make the folder 
+        else:    # Make the folder
             os.makedirs(resource_path)
 
         print('Saving: ', tree.find('name').text)
@@ -138,19 +138,20 @@ def download_scripts(mode, overwrite=None,):
             f.write(xmlstr)
 
 
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Download Scripts from Jamf')
     parser.add_argument('--url')
     parser.add_argument('--username')
     parser.add_argument('--password')
     parser.add_argument('--overwrite', action='store_true') # Overwrites existing files
-    parser.add_argument('--do_not_verify_ssl', action='store_false') # Skips SSL verification 
+    parser.add_argument('--do_not_verify_ssl', action='store_false') # Skips SSL verification
     args = parser.parse_args()
-    
+
     # Ask for password if not supplied via command line args
     if args.password:
         password = args.password
-    else:   
+    else:
         password = getpass.getpass()
 
     # Run script download for extension attributes
