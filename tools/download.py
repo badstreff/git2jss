@@ -19,19 +19,19 @@ def download_scripts(mode, overwrite=None,):
     ./scripts/script_name/script.sh
     ./scripts/script_name/script.xml
     ./extension_attributes/ea_name/ea.sh
-    ./extension_attributes/ea_name/ea.xml    
+    ./extension_attributes/ea_name/ea.xml
 
-    Usage: 
-    
+    Usage:
+
     Download all Extension Attributes from JSS:
     download_scripts('ea','overwrite=False)
 
     Download all Extension Attributes from JSS:
     download_scripts('script','overwrite=False)
-    
+
     Params:
     mode = 'script' or 'ea'
-    overwrite = True/False 
+    overwrite = True/False
     Returns: None
     """
 
@@ -48,9 +48,9 @@ def download_scripts(mode, overwrite=None,):
 
 
     # Get all IDs of resource type
-    r = requests.get(args.url + '/JSSResource/%s' %resource, 
-        auth = (args.username, password), 
-        headers= {'Accept': 'application/xml','Content-Type': 'application/xml'}, 
+    r = requests.get(args.url + '/JSSResource/%s' %resource,
+        auth = (args.username, password),
+        headers= {'Accept': 'application/xml','Content-Type': 'application/xml'},
         verify=args.do_not_verify_ssl)
 
     # Basic error handling
@@ -59,18 +59,18 @@ def download_scripts(mode, overwrite=None,):
         It's also possible that the url is incorrect. \n \
         Here is the HTTP Status code: %s" % r.status_code)
         exit(1)
-    tree = ET.fromstring(r.content) 
+    tree = ET.fromstring(r.content)
     resource_ids = [ e.text for e in tree.findall('.//id') ]
 
     # Download each resource and save to disk
     for resource_id in resource_ids:
-        r = requests.get(args.url + '/JSSResource/%s/id/%s' % (resource,resource_id), 
-            auth = (args.username, password), 
+        r = requests.get(args.url + '/JSSResource/%s/id/%s' % (resource,resource_id),
+            auth = (args.username, password),
             headers= {'Accept': 'application/xml','Content-Type': 'application/xml'}, verify=args.do_not_verify_ssl)
         tree = ET.fromstring(r.content)
 
         if mode == 'ea':
-            if tree.find('input_type/type').text != 'script': 
+            if tree.find('input_type/type').text != 'script':
                 print('No script found in: %s' % tree.find('name').text)
                 continue
 
@@ -86,41 +86,33 @@ def download_scripts(mode, overwrite=None,):
                 continue
 
 
-        else:    # Make the folder 
+        else:    # Make the folder
             os.makedirs(resource_path)
 
         print('Saving: ', tree.find('name').text)
 
-        # Determine the file extension
-        if '#!/bin/sh' in ET.tostring(tree.find(script_xml), encoding='unicode', method='text'):
+        # Create script string, and determine the file extension
+        xmlstr = ET.tostring(tree.find(script_xml), encoding='unicode', method='text').replace('\r','')
+        if xmlstr.startswith('#!/bin/sh'):
             ext = '.sh'
-
-        elif '#!/usr/bin/env sh' in ET.tostring(tree.find(script_xml), encoding='unicode', method='text'):
+        elif xmlstr.startswith('#!/usr/bin/env sh'):
             ext = '.sh'
-
-        elif '#!/bin/bash' in ET.tostring(tree.find(script_xml), encoding='unicode', method='text'):
+        elif xmlstr.startswith('#!/bin/bash'):
             ext = '.sh'
-
-        elif '#!/usr/bin/env bash' in ET.tostring(tree.find(script_xml), encoding='unicode', method='text'):
+        elif xmlstr.startswith('#!/usr/bin/env bash'):
             ext = '.sh'
-
-        elif '#!/usr/bin/python' in ET.tostring(tree.find(script_xml), encoding='unicode', method='text'):
+        elif xmlstr.startswith('#!/usr/bin/python'):
             ext = '.py'
-
-        elif '#!/usr/bin/env python' in ET.tostring(tree.find(script_xml), encoding='unicode', method='text'):
+        elif xmlstr.startswith('#!/usr/bin/env python'):
             ext = '.py'
-
-        elif '#!/usr/bin/perl' in ET.tostring(tree.find(script_xml), encoding='unicode', method='text'):
+        elif xmlstr.startswith('#!/usr/bin/perl'):
             ext = '.pl'
-
-        elif '#!/usr/bin/ruby' in ET.tostring(tree.find(script_xml), encoding='unicode', method='text'):
+        elif xmlstr.startswith('#!/usr/bin/ruby'):
             ext = '.rb'
-
         else:
             print('No interpreter directive found for: ', tree.find('name').text)
             ext = '.sh' # Call it sh for now so the uploader detects it
-        
-        xmlstr = ET.tostring(tree.find(script_xml), encoding='unicode', method='text').replace('\r','')
+
         with open(os.path.join(resource_path, '%s%s' % (mode,ext)), 'w') as f:
             f.write(xmlstr)
 
@@ -138,19 +130,20 @@ def download_scripts(mode, overwrite=None,):
             f.write(xmlstr)
 
 
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Download Scripts from Jamf')
     parser.add_argument('--url')
     parser.add_argument('--username')
     parser.add_argument('--password')
     parser.add_argument('--overwrite', action='store_true') # Overwrites existing files
-    parser.add_argument('--do_not_verify_ssl', action='store_false') # Skips SSL verification 
+    parser.add_argument('--do_not_verify_ssl', action='store_false') # Skips SSL verification
     args = parser.parse_args()
-    
+
     # Ask for password if not supplied via command line args
     if args.password:
         password = args.password
-    else:   
+    else:
         password = getpass.getpass()
 
     # Run script download for extension attributes

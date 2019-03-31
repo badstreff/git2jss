@@ -7,19 +7,19 @@ A fast asynchronous python library for syncing your scripts in git with your JSS
 1.  Fork the Project
 2.  Install [Python version 3.6](https://www.python.org/downloads/) or higher. (this is because of the async requirements)
 3.  Run `python3.6 -m pip install -r requirements.txt` to install required modules
-4.  Run `./download.py --url https://your.jss.url:8443 --username api_user` to download all scripts and extension attributes to the repository
+4.  Run `./tools/download.py --url https://your.jss.url:8443 --username api_user` to download all scripts and extension attributes to the repository
 5.  Run `./sync.py --url https://your.jss.url:8443 --username api_user` to sync all scripts back to your JSS
 
 Optional flags for `download.py`:
 
 -   `--password` for CI/CD (Will prompt for password if not set)
--   `--do_not_verify_ssl` to skip ssl verification 
+-   `--do_not_verify_ssl` to skip ssl verification
 -   `--overwrite` to overwrite all scripts and extension attributes
 
 Optional flags for `sync.py`:
 
 -   `--password` for CI/CD (Will prompt for password if not set)
--   `--do_not_verify_ssl` to skip ssl verification 
+-   `--do_not_verify_ssl` to skip ssl verification
 -   `--overwrite` to overwrite all scripts and extension attributes
 -   `--limit` to limit max connections (default=25)
 -   `--timeout` to limit max connections (default=60)
