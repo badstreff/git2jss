@@ -101,6 +101,8 @@ def download_scripts(mode, overwrite=None,):
             ext = '.sh'
         elif xmlstr.startswith('#!/usr/bin/env bash'):
             ext = '.sh'
+        elif xmlstr.startswith('#!/bin/zsh'):
+            ext = '.sh'
         elif xmlstr.startswith('#!/usr/bin/python'):
             ext = '.py'
         elif xmlstr.startswith('#!/usr/bin/env python'):
