@@ -407,7 +407,7 @@ if __name__ == '__main__':
     changed_ext_attrs = []
     changed_scripts = []
     check_for_changes()
-    print('Changed Extention Attributes: ', changed_ext_attrs)
+    print('Changed Extension Attributes: ', changed_ext_attrs)
     print('Changed Scripts: ', changed_scripts)
 
     if args.jenkins:
