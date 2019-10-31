@@ -71,7 +71,7 @@ def write_jenkins_file():
         If there are no changes, the variable will be set to 'None'
     """
 
-    if changed_ext_attrs:
+    if not changed_ext_attrs:
         contents = "eas=" + "None"
     else:
         contents = "eas=" + SLACK_EMOJI + changed_ext_attrs[0] + '\\n' + '\\'
@@ -79,7 +79,7 @@ def write_jenkins_file():
             contents = contents + '\n' + SLACK_EMOJI + \
                        changed_ext_attr + '\\n' + '\\'
 
-    if changed_scripts:
+    if not changed_scripts:
         contents = contents.rstrip('\\') + '\n' + "scripts=" + "None"
 
     else:
@@ -96,7 +96,7 @@ def write_jenkins_file():
 
 async def upload_extension_attributes(session, url, user, passwd, semaphore):
     mypath = dirname(realpath(__file__))
-    if changed_ext_attrs and not args.update_all:
+    if not changed_ext_attrs and not args.update_all:
         print('No Changes in Extension Attributes')
         return
     ext_attrs = [
@@ -235,7 +235,7 @@ async def get_ea_template(session, url, user, passwd, ext_attr):
 async def upload_scripts(session, url, user, passwd, semaphore):
     mypath = dirname(realpath(__file__))
 
-    if changed_scripts and not args.update_all:
+    if not changed_scripts and not args.update_all:
         print('No Changes in Scripts')
     scripts = [
         f.name for f in os.scandir(join(mypath, 'scripts')) if f.is_dir()
