@@ -382,11 +382,11 @@ async def main():
                 connector=aiohttp.TCPConnector(
                     ssl=args.do_not_verify_ssl)) as session:
             CATEGORIES = await get_existing_categories(
-                session, args.url, args.username, args.password, semaphore)
+                session, args.url, args.username, password, semaphore)
             await upload_scripts(session, args.url, args.username,
-                                 args.password, semaphore)
+                                 password, semaphore)
             await upload_extension_attributes(session, args.url, args.username,
-                                              args.password, semaphore)
+                                              password, semaphore)
 
 
 if __name__ == '__main__':
