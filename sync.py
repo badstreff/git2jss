@@ -386,7 +386,7 @@ async def main():
             await upload_scripts(session, args.url, args.username,
                                  args.password, semaphore)
             await upload_extension_attributes(session, args.url, args.username,
-                                              args.assword, semaphore)
+                                              args.password, semaphore)
 
 
 if __name__ == '__main__':
