@@ -382,11 +382,11 @@ async def main():
                 connector=aiohttp.TCPConnector(
                     ssl=args.do_not_verify_ssl)) as session:
             CATEGORIES = await get_existing_categories(
-                session, args.url, args.username, password, semaphore)
+                session, args.url, args.username, args.password, semaphore)
             await upload_scripts(session, args.url, args.username,
-                                 password, semaphore)
+                                 args.password, semaphore)
             await upload_extension_attributes(session, args.url, args.username,
-                                              password, semaphore)
+                                              args.assword, semaphore)
 
 
 if __name__ == '__main__':
@@ -414,10 +414,8 @@ if __name__ == '__main__':
         write_jenkins_file()
 
     # Ask for password if not supplied via command line args
-    if args.password:
-        password = args.password
-    else:
-        password = getpass.getpass()
+    if not args.password:
+        args.password = getpass.getpass()
 
     loop = asyncio.get_event_loop()
 
