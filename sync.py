@@ -414,10 +414,8 @@ if __name__ == '__main__':
         write_jenkins_file()
 
     # Ask for password if not supplied via command line args
-    if args.password:
-        password = args.password
-    else:
-        password = getpass.getpass()
+    if not args.password:
+        args.password = getpass.getpass()
 
     loop = asyncio.get_event_loop()
 
