@@ -201,13 +201,7 @@ async def get_ea_template(session, url, user, passwd, ext_attr):
                     auth=auth,
                     headers=headers) as resp:
                 if resp.status == 200:
-                    async with session.get(
-                            url +
-                            '/JSSResource/computerextensionattributes/name/' +
-                            ext_attr,
-                            auth=auth,
-                            headers=headers) as response:
-                        template = ET.fromstring(await response.text())
+                    template = ET.fromstring(await resp.text())
                 else:
                     template = ET.parse(join(mypath,
                                              'templates/ea.xml')).getroot()
@@ -235,12 +229,13 @@ async def get_ea_template(session, url, user, passwd, ext_attr):
 async def upload_scripts(session, url, user, passwd, semaphore):
     mypath = dirname(realpath(__file__))
 
+    scripts = []
     if not changed_scripts and not args.update_all:
         print('No Changes in Scripts')
-    scripts = [
-        f.name for f in os.scandir(join(mypath, 'scripts')) if f.is_dir()
-        and f.name in changed_scripts
-    ]
+        scripts = [
+            f.name for f in os.scandir(join(mypath, 'scripts')) if f.is_dir()
+            and f.name in changed_scripts
+        ]
     if args.update_all:
         print('Copying all scripts...')
         scripts = [
@@ -253,6 +248,7 @@ async def upload_scripts(session, url, user, passwd, semaphore):
         task = asyncio.ensure_future(
             upload_script(session, url, user, passwd, script, semaphore))
         tasks.append(task)
+
     await asyncio.gather(*tasks)
 
 
@@ -323,11 +319,7 @@ async def get_script_template(session, url, user, passwd, script):
                     auth=auth,
                     headers=headers) as resp:
                 if resp.status == 200:
-                    async with session.get(
-                            url + '/JSSResource/scripts/name/' + script,
-                            auth=auth,
-                            headers=headers) as response:
-                        template = ET.fromstring(await response.text())
+                    template = ET.fromstring(await resp.text())
                 else:
                     template = ET.parse(join(
                         mypath, 'templates/script.xml')).getroot()
@@ -377,16 +369,15 @@ async def main():
     # pylint: disable=global-statement
     global CATEGORIES
     semaphore = asyncio.BoundedSemaphore(args.limit)
-    async with aiohttp.ClientSession() as session:
-        async with aiohttp.ClientSession(
-                connector=aiohttp.TCPConnector(
-                    ssl=args.do_not_verify_ssl)) as session:
-            CATEGORIES = await get_existing_categories(
-                session, args.url, args.username, args.password, semaphore)
-            await upload_scripts(session, args.url, args.username,
-                                 args.password, semaphore)
-            await upload_extension_attributes(session, args.url, args.username,
-                                              args.password, semaphore)
+    async with aiohttp.ClientSession(
+            connector=aiohttp.TCPConnector(
+                ssl=args.do_not_verify_ssl)) as session:
+        CATEGORIES = await get_existing_categories(
+            session, args.url, args.username, args.password, semaphore)
+        await upload_scripts(session, args.url, args.username,
+                             args.password, semaphore)
+        await upload_extension_attributes(session, args.url, args.username,
+                                          args.password, semaphore)
 
 
 if __name__ == '__main__':
