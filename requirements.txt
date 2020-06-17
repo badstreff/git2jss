@@ -1,5 +1,6 @@
-aiohttp
+aiohttp~=3.6.2
 cchardet
 aiodns
-uvloop
-requests
+uvloop~=0.14.0
+requests~=2.23.0
+urllib3~=1.25.9
