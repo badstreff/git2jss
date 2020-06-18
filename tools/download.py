@@ -1,8 +1,9 @@
 #!/usr/bin/env python
 import getpass
+from xml.dom import minidom
+
 import requests
 from xml.etree import ElementTree as ET
-from xml.dom import minidom
 import os
 import argparse
 import urllib3
@@ -12,7 +13,8 @@ urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 mypath = os.path.dirname(os.path.realpath(__file__))
 
-def download_scripts(mode, overwrite=None,):
+
+def download_scripts(mode, overwrite=None, ):
     """ Downloads Scripts to ./scripts and Extension Attributes to ./extension_attributes
 
     Folder Structure:
@@ -46,12 +48,11 @@ def download_scripts(mode, overwrite=None,):
         download_path = 'scripts'
         script_xml = 'script_contents'
 
-
     # Get all IDs of resource type
-    r = requests.get(args.url + '/JSSResource/%s' %resource,
-        auth = (args.username, password),
-        headers= {'Accept': 'application/xml','Content-Type': 'application/xml'},
-        verify=args.do_not_verify_ssl)
+    r = requests.get(args.url + '/JSSResource/%s' % resource,
+                     auth=(args.username, password),
+                     headers={'Accept': 'application/xml', 'Content-Type': 'application/xml'},
+                     verify=args.do_not_verify_ssl)
 
     # Basic error handling
     if r.status_code != 200:
@@ -60,13 +61,14 @@ def download_scripts(mode, overwrite=None,):
         Here is the HTTP Status code: %s" % r.status_code)
         exit(1)
     tree = ET.fromstring(r.content)
-    resource_ids = [ e.text for e in tree.findall('.//id') ]
+    resource_ids = [e.text for e in tree.findall('.//id')]
 
     # Download each resource and save to disk
     for resource_id in resource_ids:
-        r = requests.get(args.url + '/JSSResource/%s/id/%s' % (resource,resource_id),
-            auth = (args.username, password),
-            headers= {'Accept': 'application/xml','Content-Type': 'application/xml'}, verify=args.do_not_verify_ssl)
+        r = requests.get(args.url + '/JSSResource/%s/id/%s' % (resource, resource_id),
+                         auth=(args.username, password),
+                         headers={'Accept': 'application/xml', 'Content-Type': 'application/xml'},
+                         verify=args.do_not_verify_ssl)
         tree = ET.fromstring(r.content)
 
         if mode == 'ea':
@@ -75,7 +77,7 @@ def download_scripts(mode, overwrite=None,):
                 continue
 
         # Determine resource path (folder name)
-        resource_path = os.path.join(mypath, '..', download_path ,tree.find('name').text)
+        resource_path = os.path.join(mypath, '..', download_path, tree.find('name').text)
 
         # Check to see if it exists
         if os.path.exists(resource_path):
@@ -85,14 +87,13 @@ def download_scripts(mode, overwrite=None,):
                 print("\tSkipping: ", tree.find('name').text)
                 continue
 
-
-        else:    # Make the folder
+        else:  # Make the folder
             os.makedirs(resource_path)
 
         print('Saving: ', tree.find('name').text)
 
         # Create script string, and determine the file extension
-        xmlstr = ET.tostring(tree.find(script_xml), encoding='unicode', method='text').replace('\r','')
+        xmlstr = ET.tostring(tree.find(script_xml), encoding='unicode', method='text').replace('\r', '')
         if xmlstr.startswith('#!/bin/sh'):
             ext = '.sh'
         elif xmlstr.startswith('#!/usr/bin/env sh'):
@@ -113,15 +114,15 @@ def download_scripts(mode, overwrite=None,):
             ext = '.rb'
         else:
             print('No interpreter directive found for: ', tree.find('name').text)
-            ext = '.sh' # Call it sh for now so the uploader detects it
+            ext = '.sh'  # Call it sh for now so the uploader detects it
 
-        with open(os.path.join(resource_path, '%s%s' % (mode,ext)), 'w') as f:
+        with open(os.path.join(resource_path, '%s%s' % (mode, ext)), 'w') as f:
             f.write(xmlstr)
 
-        # Need to remove ID and script contents and write out xml
+        # Need to remove script contents and write out xml
         try:
             tree.find(script_xml).clear()
-            tree.remove(tree.find('id'))
+            # tree.remove(tree.find('id'))
             tree.remove(tree.find('script_contents_encoded'))
             tree.remove(tree.find('filename'))
         except:
@@ -132,14 +133,13 @@ def download_scripts(mode, overwrite=None,):
             f.write(xmlstr)
 
 
-
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Download Scripts from Jamf')
     parser.add_argument('--url')
     parser.add_argument('--username')
     parser.add_argument('--password')
-    parser.add_argument('--overwrite', action='store_true') # Overwrites existing files
-    parser.add_argument('--do_not_verify_ssl', action='store_false') # Skips SSL verification
+    parser.add_argument('--overwrite', action='store_true')  # Overwrites existing files
+    parser.add_argument('--do_not_verify_ssl', action='store_false')  # Skips SSL verification
     args = parser.parse_args()
 
     # Ask for password if not supplied via command line args
