@@ -111,18 +111,18 @@ def write_jenkins_file():
 
 
 async def upload_extension_attributes(session, url, semaphore):
-    mypath = dirname(realpath(__file__))
+    my_path = dirname(realpath(__file__))
     if not changed_ext_attrs and not args.update_all:
         print('No Changes in Extension Attributes')
         return
     ext_attrs = [
-        f.name for f in os.scandir(join(mypath, EA_FOLDER_NAME))
+        f.name for f in os.scandir(join(my_path, EA_FOLDER_NAME))
         if f.is_dir() and f.name in changed_ext_attrs
     ]
     if args.update_all:
         print("Copying all extension attributes...")
         ext_attrs = [
-            f.name for f in os.scandir(join(mypath, EA_FOLDER_NAME))
+            f.name for f in os.scandir(join(my_path, EA_FOLDER_NAME))
             if f.is_dir()
         ]
     tasks = []
