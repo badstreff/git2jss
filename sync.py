@@ -136,7 +136,7 @@ async def upload_extension_attributes(session, url, semaphore):
 async def upload_extension_attribute(session, url, ext_attr, semaphore):
     print('uploading ', ext_attr)
 
-    script_file = (EA_FOLDER_NAME, ext_attr)
+    script_file = file_contents(EA_FOLDER_NAME, ext_attr, SUPPORTED_SCRIPT_EXTENSIONS)
     if not script_file:
         return
 
@@ -211,10 +211,10 @@ async def upload_script(session, url: str, script: str, semaphore):
 
     async with semaphore:
         with async_timeout.timeout(args.timeout):
-            template = await get_template(session, url, SCRIPTS_FOLDER_NAME, script, '/JSSResource/scripts/name')
+            template = await get_template(session, url, SCRIPTS_FOLDER_NAME, script, '/JSSResource/scripts/name/')
 
-            script_id = template.find(TEMPLATE_ID).text
             script_name = template.find(TEMPLATE_NAME).text
+            script_id = template.find(TEMPLATE_ID).text
 
             resp = await session.get(
                 url + '/uapi/v1/scripts/' + script_id,
@@ -251,6 +251,9 @@ async def get_template(session, url: str, dir_name: str, file_name: str, endpoin
     try:
         script_content = file_contents(dir_name, file_name, ['xml'])
         template = ET.fromstring(script_content)
+        if template.find(TEMPLATE_ID) is None:
+            print('No ID found in XML file for', dir_name + '/' + file_name,  'retrieving it by name from Jamf Pro.')
+            raise IndexError
     except IndexError:
         with async_timeout.timeout(args.timeout):
 
