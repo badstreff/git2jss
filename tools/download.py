@@ -64,6 +64,8 @@ def download_scripts(mode, overwrite=None,):
 
     # Download each resource and save to disk
     for resource_id in resource_ids:
+        get_script = True
+
         r = requests.get(args.url + '/JSSResource/%s/id/%s' % (resource,resource_id),
             auth = (args.username, password),
             headers= {'Accept': 'application/xml','Content-Type': 'application/xml'}, verify=args.do_not_verify_ssl)
@@ -72,7 +74,8 @@ def download_scripts(mode, overwrite=None,):
         if mode == 'ea':
             if tree.find('input_type/type').text != 'script':
                 print('No script found in: %s' % tree.find('name').text)
-                continue
+                get_script = False
+                # continue
 
         # Determine resource path (folder name)
         resource_path = os.path.join(mypath, '..', download_path ,tree.find('name').text)
@@ -92,40 +95,41 @@ def download_scripts(mode, overwrite=None,):
         print('Saving: ', tree.find('name').text)
 
         # Create script string, and determine the file extension
-        xmlstr = ET.tostring(tree.find(script_xml), encoding='unicode', method='text').replace('\r','')
-        if xmlstr.startswith('#!/bin/sh'):
-            ext = '.sh'
-        elif xmlstr.startswith('#!/usr/bin/env sh'):
-            ext = '.sh'
-        elif xmlstr.startswith('#!/bin/bash'):
-            ext = '.sh'
-        elif xmlstr.startswith('#!/usr/bin/env bash'):
-            ext = '.sh'
-        elif xmlstr.startswith('#!/bin/zsh'):
-            ext = '.sh'
-        elif xmlstr.startswith('#!/usr/bin/python'):
-            ext = '.py'
-        elif xmlstr.startswith('#!/usr/bin/env python'):
-            ext = '.py'
-        elif xmlstr.startswith('#!/usr/bin/perl'):
-            ext = '.pl'
-        elif xmlstr.startswith('#!/usr/bin/ruby'):
-            ext = '.rb'
-        else:
-            print('No interpreter directive found for: ', tree.find('name').text)
-            ext = '.sh' # Call it sh for now so the uploader detects it
+        if get_script:
+            xmlstr = ET.tostring(tree.find(script_xml), encoding='unicode', method='text').replace('\r','')
+            if xmlstr.startswith('#!/bin/sh'):
+                ext = '.sh'
+            elif xmlstr.startswith('#!/usr/bin/env sh'):
+                ext = '.sh'
+            elif xmlstr.startswith('#!/bin/bash'):
+                ext = '.sh'
+            elif xmlstr.startswith('#!/usr/bin/env bash'):
+                ext = '.sh'
+            elif xmlstr.startswith('#!/bin/zsh'):
+                ext = '.sh'
+            elif xmlstr.startswith('#!/usr/bin/python'):
+                ext = '.py'
+            elif xmlstr.startswith('#!/usr/bin/env python'):
+                ext = '.py'
+            elif xmlstr.startswith('#!/usr/bin/perl'):
+                ext = '.pl'
+            elif xmlstr.startswith('#!/usr/bin/ruby'):
+                ext = '.rb'
+            else:
+                print('No interpreter directive found for: ', tree.find('name').text)
+                ext = '.sh' # Call it sh for now so the uploader detects it
 
-        with open(os.path.join(resource_path, '%s%s' % (mode,ext)), 'w') as f:
-            f.write(xmlstr)
+            with open(os.path.join(resource_path, '%s%s' % (mode,ext)), 'w') as f:
+                f.write(xmlstr)
 
-        # Need to remove ID and script contents and write out xml
-        try:
-            tree.find(script_xml).clear()
-            tree.remove(tree.find('id'))
-            tree.remove(tree.find('script_contents_encoded'))
-            tree.remove(tree.find('filename'))
-        except:
-            pass
+            # Need to remove ID and script contents and write out xml
+            try:
+                tree.find(script_xml).clear()
+                tree.remove(tree.find('id'))
+                tree.remove(tree.find('script_contents_encoded'))
+                tree.remove(tree.find('filename'))
+            except:
+                pass
 
         xmlstr = minidom.parseString(ET.tostring(tree, encoding='unicode', method='xml')).toprettyxml(indent="   ")
         with open(os.path.join(resource_path, '%s.xml' % mode), 'w') as f:
