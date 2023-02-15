@@ -120,6 +120,8 @@ async def upload_extension_attributes(session, url, user, passwd, semaphore):
 
 async def upload_extension_attribute(session, url, user, passwd, ext_attr,
                                      semaphore):
+    has_script = True
+    
     mypath = dirname(realpath(__file__))
     auth = aiohttp.BasicAuth(user, passwd)
     headers = {'Accept': 'application/xml', 'Content-Type': 'application/xml'}
@@ -132,11 +134,13 @@ async def upload_extension_attribute(session, url, user, passwd, ext_attr,
     if script_file == []:
         print('Warning: No script file found in extension_attributes/%s' %
               ext_attr)
-        return  # Need to skip if no script.
-    with open(
-            join(mypath, 'extension_attributes', ext_attr, script_file[0]),
-            'r') as f:
-        data = f.read()
+        has_script = False
+        # return  # Need to skip if no script.
+    if has_script:
+        with open(
+                join(mypath, 'extension_attributes', ext_attr, script_file[0]),
+                'r') as f:
+            data = f.read()
     async with semaphore:
         with async_timeout.timeout(args.timeout):
             template = await get_ea_template(session, url, user, passwd,
@@ -146,7 +150,8 @@ async def upload_extension_attribute(session, url, user, passwd, ext_attr,
                     template.find('name').text,
                     auth=auth,
                     headers=headers) as resp:
-                template.find('input_type/script').text = data
+                if has_script and data:
+                    template.find('input_type/script').text = data
                 if args.verbose:
                     print(ET.tostring(template))
                     print('response status initial get: ', resp.status)
