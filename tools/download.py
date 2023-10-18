@@ -6,6 +6,7 @@ from xml.dom import minidom
 import os
 import argparse
 import urllib3
+import configparser
 
 # Suppress the warning in dev
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
@@ -145,7 +146,38 @@ if __name__ == '__main__':
     parser.add_argument('--overwrite', action='store_true') # Overwrites existing files
     parser.add_argument('--do_not_verify_ssl', action='store_false') # Skips SSL verification
     args = parser.parse_args()
+    # Get configs from files
+    CONFIG_FILE_LOCATIONS = ['jamfapi.cfg',os.path.expanduser('~/jamfapi.cfg')]
+    CONFIG_FILE = ''
+    # Parse Config File
+    CONFPARSER = configparser.ConfigParser()
+    for config_path in CONFIG_FILE_LOCATIONS:
+        if os.path.exists(config_path):
+            print("Found Config: {0}".format(config_path))
+            CONFIG_FILE = config_path
 
+    if CONFIG_FILE == "":
+        config_ = configparser.ConfigParser()
+        config_['jss'] = {}
+        config_['jss']['username'] = "username"
+        config_['jss']['password'] = "password"
+        config_['jss']['server'] = "server"
+        print(config_)
+        with open('jamfapi.cfg', 'w') as configfile:
+            config_.write(configfile)
+        print("Config File Created. Please edit jamfapi.cfg and run again.")
+        
+        print("No Config File found!")
+        exit(0)
+    else:
+        # Read local directory, user home, then /etc/ for besapi.conf
+        CONFPARSER.read(CONFIG_FILE)
+        # If file exists
+        # Get config
+        args.username = CONFPARSER.get('jss', 'username')
+        args.password = CONFPARSER.get('jss', 'password')
+        args.url = CONFPARSER.get('jss', 'server')
+    
     # Ask for password if not supplied via command line args
     if args.password:
         password = args.password
