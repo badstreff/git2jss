@@ -11,7 +11,24 @@ import configparser
 # Suppress the warning in dev
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
-mypath = os.path.dirname(os.path.realpath(__file__))
+# https://github.com/lazymutt/Jamf-Pro-API-Sampler/blob/5f8efa92911271248f527e70bd682db79bc600f2/jamf_duplicate_detection.py#L99
+def get_uapi_token():
+    '''
+    fetches api token
+    '''
+    jamf_test_url = url + "/api/v1/auth/token"
+    response = requests.post(url=jamf_test_url, auth=(username, password))
+    response_json = response.json()
+    return response_json['token']
+
+
+def invalidate_uapi_token(uapi_token):
+    '''
+    invalidates api token
+    '''
+    jamf_test_url = url + "/api/v1/auth/invalidate-token"
+    headers = {'Accept': '*/*', 'Authorization': 'Bearer ' + uapi_token}
+    _ = requests.post(url=jamf_test_url, headers=headers)
 
 def download_scripts(mode, overwrite=None,):
     """ Downloads Scripts to ./scripts and Extension Attributes to ./extension_attributes
@@ -47,12 +64,13 @@ def download_scripts(mode, overwrite=None,):
         download_path = 'scripts'
         script_xml = 'script_contents'
 
-
+    token = get_uapi_token()
     # Get all IDs of resource type
-    r = requests.get(args.url + '/JSSResource/%s' %resource,
-        auth = (args.username, password),
-        headers= {'Accept': 'application/xml','Content-Type': 'application/xml'},
-        verify=args.do_not_verify_ssl)
+    r = requests.get(url + '/JSSResource/%s' %resource,
+        headers= {'Accept': 'application/xml',
+                  'Content-Type': 'application/xml',
+                  'Authorization': 'Bearer ' + token},
+            verify=args.do_not_verify_ssl)
 
     # Basic error handling
     if r.status_code != 200:
@@ -67,9 +85,11 @@ def download_scripts(mode, overwrite=None,):
     for resource_id in resource_ids:
         get_script = True
 
-        r = requests.get(args.url + '/JSSResource/%s/id/%s' % (resource,resource_id),
-            auth = (args.username, password),
-            headers= {'Accept': 'application/xml','Content-Type': 'application/xml'}, verify=args.do_not_verify_ssl)
+        r = requests.get(url + '/JSSResource/%s/id/%s' % (resource,resource_id),
+            headers= {'Accept': 'application/xml',
+                  'Content-Type': 'application/xml',
+                  'Authorization': 'Bearer ' + token},
+                verify=args.do_not_verify_ssl)
         tree = ET.fromstring(r.content)
 
         if mode == 'ea':
@@ -79,7 +99,7 @@ def download_scripts(mode, overwrite=None,):
                 # continue
 
         # Determine resource path (folder name)
-        resource_path = os.path.join(mypath, '..', download_path ,tree.find('name').text)
+        resource_path = os.path.join(export_path, download_path ,tree.find('name').text)
 
         # Check to see if it exists
         if os.path.exists(resource_path):
@@ -135,14 +155,14 @@ def download_scripts(mode, overwrite=None,):
         xmlstr = minidom.parseString(ET.tostring(tree, encoding='unicode', method='xml')).toprettyxml(indent="   ")
         with open(os.path.join(resource_path, '%s.xml' % mode), 'w') as f:
             f.write(xmlstr)
-
-
+    invalidate_uapi_token(token)
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Download Scripts from Jamf')
     parser.add_argument('--url')
     parser.add_argument('--username')
     parser.add_argument('--password')
+    parser.add_argument('--export_path')
     parser.add_argument('--overwrite', action='store_true') # Overwrites existing files
     parser.add_argument('--do_not_verify_ssl', action='store_false') # Skips SSL verification
     args = parser.parse_args()
@@ -162,7 +182,8 @@ if __name__ == '__main__':
         config_['jss']['username'] = "username"
         config_['jss']['password'] = "password"
         config_['jss']['server'] = "server"
-        print(config_)
+        config_['jss']['export_path'] = "export_path"
+
         with open('jamfapi.cfg', 'w') as configfile:
             config_.write(configfile)
         print("Config File Created. Please edit jamfapi.cfg and run again.")
@@ -174,16 +195,30 @@ if __name__ == '__main__':
         CONFPARSER.read(CONFIG_FILE)
         # If file exists
         # Get config
-        args.username = CONFPARSER.get('jss', 'username')
-        args.password = CONFPARSER.get('jss', 'password')
-        args.url = CONFPARSER.get('jss', 'server')
-    
+        username = CONFPARSER.get('jss', 'username')
+        password = CONFPARSER.get('jss', 'password')
+        url = CONFPARSER.get('jss', 'server')
+        try:
+            export_path = CONFPARSER.get('jss', 'export_path')
+        except:
+            # Export to current directory by default
+            export_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), '..')
+
     # Ask for password if not supplied via command line args
     if args.password:
         password = args.password
-    else:
+    elif password is None:
         password = getpass.getpass()
+    
+    if args.export_path:
+        export_path = args.export_path
+    
+    if args.url:
+        url = args.url
 
+    if args.username:
+        username = args.username
+    
     # Run script download for extension attributes
     download_scripts(overwrite=args.overwrite, mode='ea')
     # Run script download for scripts
