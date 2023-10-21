@@ -1,6 +1,7 @@
 <?xml version="1.0" ?>
 <computer_extension_attribute>
    <name>Last User</name>
+   <enabled>true</enabled>
    <description>This attribute displays the last user to log in.  This attribute applies to both Mac and Windows.</description>
    <data_type>String</data_type>
    <input_type>
@@ -9,5 +10,4 @@
       <script/>
    </input_type>
    <inventory_display>General</inventory_display>
-   <recon_display>Extension Attributes</recon_display>
 </computer_extension_attribute>
