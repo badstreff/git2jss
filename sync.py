@@ -148,7 +148,7 @@ async def upload_extension_attribute(session, url, user, passwd, ext_attr,
     # Get the script files within the folder, we'll only use
     # script_file[0] in case there are multiple files
     script_file = [
-        f.name for f in os.scandir(join('extension_attributes', ext_attr))
+        f.name for f in os.scandir(join(sync_path, 'extension_attributes', ext_attr))
         if f.is_file() and f.name.split('.')[-1] in SUPPORTED_EA_EXTENSIONS
     ]
     if script_file == []:
@@ -203,7 +203,7 @@ async def get_ea_template(session, url, user, passwd, ext_attr):
     # auth = aiohttp.BasicAuth(user, passwd)
     # sync_path = dirname(realpath(__file__))
     xml_file = [
-        f.name for f in os.scandir(join('extension_attributes', ext_attr))
+        f.name for f in os.scandir(join(sync_path, 'extension_attributes', ext_attr))
         if f.is_file() and f.name.split('.')[-1] in 'xml'
     ]
     try:
@@ -285,7 +285,7 @@ async def upload_script(session, url, user, passwd, script, semaphore):
                 'Content-Type': 'application/xml', 
                 'Authorization': 'Bearer ' + token}
     script_file = [
-        f.name for f in os.scandir(join('scripts', script))
+        f.name for f in os.scandir(join(sync_path, 'scripts', script))
         if f.is_file() and f.name.split('.')[-1] in SUPPORTED_SCRIPT_EXTENSIONS
     ]
     if script_file == []:
@@ -327,7 +327,7 @@ async def get_script_template(session, url, user, passwd, script):
     # auth = aiohttp.BasicAuth(user, passwd)
     # sync_path = dirname(realpath(__file__))
     xml_file = [
-        f.name for f in os.scandir(join('scripts', script))
+        f.name for f in os.scandir(join(sync_path, 'scripts', script))
         if f.is_file() and f.name.split('.')[-1] in 'xml'
     ]
     try:
