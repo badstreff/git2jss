@@ -158,6 +158,9 @@ def download_scripts(mode, overwrite=None,):
     invalidate_uapi_token(token)
 
 if __name__ == '__main__':
+    # Export to current directory by default
+    export_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), '..')
+
     parser = argparse.ArgumentParser(description='Download Scripts from Jamf')
     parser.add_argument('--url')
     parser.add_argument('--username')
@@ -177,38 +180,29 @@ if __name__ == '__main__':
             CONFIG_FILE = config_path
 
     if CONFIG_FILE == "":
-<<<<<<< HEAD
         print("No Config File found!")
     else:
-        CONFPARSER.read(CONFIG_FILE)
-=======
-        config_ = configparser.ConfigParser()
-        config_['jss'] = {}
-        config_['jss']['username'] = "username"
-        config_['jss']['password'] = "password"
-        config_['jss']['server'] = "server"
-        config_['jss']['export_path'] = "export_path"
-
-        with open('jamfapi.cfg', 'w') as configfile:
-            config_.write(configfile)
-        print("Config File Created. Please edit jamfapi.cfg and run again.")
-        
-        print("No Config File found!")
-        exit(0)
-    else:
-        # Read local directory, user home, then /etc/ for besapi.conf
-        CONFPARSER.read(CONFIG_FILE)
-        # If file exists
->>>>>>> 349b1009f7063b15df71ccccbc5695c1b9a31e9d
-        # Get config
-        username = CONFPARSER.get('jss', 'username')
-        password = CONFPARSER.get('jss', 'password')
-        url = CONFPARSER.get('jss', 'server')
+        try:
+            # Get config
+            CONFPARSER.read(CONFIG_FILE)
+        except:
+            print("Can't read config file")
+        try:
+            username = CONFPARSER.get('jss', 'username')
+        except:
+            print("Can't find username in configfile")
+        try:                
+            password = CONFPARSER.get('jss', 'password')
+        except:
+            print("Can't find password in configfile")
+        try:
+            url = CONFPARSER.get('jss', 'server')
+        except:
+            print("Can't find url in configfile")
         try:
             export_path = CONFPARSER.get('jss', 'export_path')
         except:
-            # Export to current directory by default
-            export_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), '..')
+            print("Can't find export_path in config")
 
     # Ask for password if not supplied via command line args
     if args.password:
