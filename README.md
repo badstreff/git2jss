@@ -27,6 +27,16 @@ Optional flags for `sync.py`:
 -   `--update_all` to upload all resources in `./extension_attributes` and `./scripts`
 -   `--jenkins` to write a Jenkins file:`jenkins.properties` with `$scripts` and `$eas` and compare `$GIT_PREVIOUS_COMMIT` with `$GIT_COMMIT`
 
+### [ConfigParser](https://docs.python.org/3/library/configparser.html) (Optional):
+
+A config file can be created in the project root or the users home folder. When a config file exists, the script will not promt for a password.
+
+ A jamfapi.cfg file can provide the following variables:
+
+ - username
+ - password
+ - url
+
 ### Prerequisites
 git2jss requires [Python 3.6](https://www.python.org/downloads/) and the python modules listed in `requirements.txt`
 
