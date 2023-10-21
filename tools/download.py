@@ -177,9 +177,29 @@ if __name__ == '__main__':
             CONFIG_FILE = config_path
 
     if CONFIG_FILE == "":
+<<<<<<< HEAD
         print("No Config File found!")
     else:
         CONFPARSER.read(CONFIG_FILE)
+=======
+        config_ = configparser.ConfigParser()
+        config_['jss'] = {}
+        config_['jss']['username'] = "username"
+        config_['jss']['password'] = "password"
+        config_['jss']['server'] = "server"
+        config_['jss']['export_path'] = "export_path"
+
+        with open('jamfapi.cfg', 'w') as configfile:
+            config_.write(configfile)
+        print("Config File Created. Please edit jamfapi.cfg and run again.")
+        
+        print("No Config File found!")
+        exit(0)
+    else:
+        # Read local directory, user home, then /etc/ for besapi.conf
+        CONFPARSER.read(CONFIG_FILE)
+        # If file exists
+>>>>>>> 349b1009f7063b15df71ccccbc5695c1b9a31e9d
         # Get config
         username = CONFPARSER.get('jss', 'username')
         password = CONFPARSER.get('jss', 'password')
