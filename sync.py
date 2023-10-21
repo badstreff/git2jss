@@ -432,7 +432,7 @@ if __name__ == '__main__':
 
     if args.jenkins:
         write_jenkins_file()
-    # Get configs from files
+    # Set configs file locations
     CONFIG_FILE_LOCATIONS = ['jamfapi.cfg',os.path.expanduser('~/jamfapi.cfg')]
     CONFIG_FILE = ''
     # Parse Config File
@@ -445,9 +445,7 @@ if __name__ == '__main__':
     if CONFIG_FILE == "":
         print("No Config File found!")
     else:
-        # Read local directory, user home, then /etc/ for besapi.conf
         CONFPARSER.read(CONFIG_FILE)
-        # If file exists
         # Get config
         username = CONFPARSER.get('jss', 'username')
         password = CONFPARSER.get('jss', 'password')
