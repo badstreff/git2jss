@@ -431,6 +431,9 @@ async def main():
 if __name__ == '__main__':
     asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
 
+    # Export to current directory by default
+    sync_path = dirname(realpath(__file__))
+    
     parser = argparse.ArgumentParser(description='Sync repo with JamfPro')
     parser.add_argument('--url')
     parser.add_argument('--username')
@@ -465,16 +468,27 @@ if __name__ == '__main__':
     if CONFIG_FILE == "":
         print("No Config File found!")
     else:
-        CONFPARSER.read(CONFIG_FILE)
-        # Get config
-        username = CONFPARSER.get('jss', 'username')
-        password = CONFPARSER.get('jss', 'password')
-        url = CONFPARSER.get('jss', 'server')
+        try:
+            # Get config
+            CONFPARSER.read(CONFIG_FILE)
+        except:
+            print("Can't read config file")
+        try:
+            username = CONFPARSER.get('jss', 'username')
+        except:
+            print("Can't find username in configfile")
+        try:                
+            password = CONFPARSER.get('jss', 'password')
+        except:
+            print("Can't find password in configfile")
+        try:
+            url = CONFPARSER.get('jss', 'server')
+        except:
+            print("Can't find url in configfile")
         try:
             sync_path = CONFPARSER.get('jss', 'sync_path')
         except:
-            # Export to current directory by default
-            sync_path = dirname(realpath(__file__))
+            print("Can't find sync_path in config")
 
     # Ask for password if not supplied via command line args
     if args.password:
