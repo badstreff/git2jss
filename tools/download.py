@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 import getpass
 import requests
 from xml.etree import ElementTree as ET
@@ -201,9 +201,7 @@ if __name__ == "__main__":
             print("Found Config: {0}".format(config_path))
             CONFIG_FILE = config_path
 
-    if CONFIG_FILE == "":
-        print("No Config File found!")
-    else:
+    if CONFIG_FILE is not "":
         try:
             # Get config
             CONFPARSER.read(CONFIG_FILE)
