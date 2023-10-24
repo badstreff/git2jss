@@ -201,7 +201,7 @@ if __name__ == "__main__":
             print("Found Config: {0}".format(config_path))
             CONFIG_FILE = config_path
 
-    if CONFIG_FILE is not "":
+    if CONFIG_FILE != "":
         try:
             # Get config
             CONFPARSER.read(CONFIG_FILE)
