@@ -38,7 +38,7 @@ def get_uapi_token():
     fetches api token
     """
     jamf_test_url = url + "/api/v1/auth/token"
-    response = requests.post(url=jamf_test_url, auth=(username, password))
+    response = requests.post(url=jamf_test_url, auth=(username, password), timeout=5)
     response_json = response.json()
     return response_json["token"]
 
@@ -49,7 +49,7 @@ def invalidate_uapi_token(uapi_token):
     """
     jamf_test_url = url + "/api/v1/auth/invalidate-token"
     headers = {"Accept": "*/*", "Authorization": "Bearer " + uapi_token}
-    _ = requests.post(url=jamf_test_url, headers=headers)
+    _ = requests.post(url=jamf_test_url, headers=headers, timeout=5)
 
 
 def check_for_changes():
