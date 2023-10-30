@@ -14,8 +14,6 @@ import aiohttp
 import uvloop
 import configparser
 import requests
-import configparser
-import requests
 
 logging.basicConfig(
     level=logging.DEBUG,
@@ -32,26 +30,6 @@ SLACK_EMOJI = ":white_check_mark: "
 SUPPORTED_SCRIPT_EXTENSIONS = ("sh", "py", "pl", "swift", "rb")
 SUPPORTED_EA_EXTENSIONS = ("sh", "py", "pl", "swift", "rb")
 CATEGORIES = []
-
-
-# https://github.com/lazymutt/Jamf-Pro-API-Sampler/blob/5f8efa92911271248f527e70bd682db79bc600f2/jamf_duplicate_detection.py#L99
-def get_uapi_token():
-    """
-    fetches api token
-    """
-    jamf_test_url = url + "/api/v1/auth/token"
-    response = requests.post(url=jamf_test_url, auth=(username, password))
-    response_json = response.json()
-    return response_json["token"]
-
-
-def invalidate_uapi_token(uapi_token):
-    """
-    invalidates api token
-    """
-    jamf_test_url = url + "/api/v1/auth/invalidate-token"
-    headers = {"Accept": "*/*", "Authorization": "Bearer " + uapi_token}
-    _ = requests.post(url=jamf_test_url, headers=headers)
 
 
 # https://github.com/lazymutt/Jamf-Pro-API-Sampler/blob/5f8efa92911271248f527e70bd682db79bc600f2/jamf_duplicate_detection.py#L99
@@ -537,3 +515,6 @@ if __name__ == "__main__":
         warnings.simplefilter("always", ResourceWarning)
 
     loop.run_until_complete(main())
+
+    # Remove token
+    invalidate_uapi_token()
