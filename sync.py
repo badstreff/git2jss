@@ -474,7 +474,7 @@ if __name__ == "__main__":
         CONFPARSER.read(CONFIG_FILE)
         try:
             username = CONFPARSER.get("jss", "username")
-        except:
+        except configparser.NoOptionError as A:
             print("Can't find username in configfile")
         try:
             password = CONFPARSER.get("jss", "password")
