@@ -168,7 +168,7 @@ def download_scripts(
                 tree.remove(tree.find("id"))
                 tree.remove(tree.find("script_contents_encoded"))
                 tree.remove(tree.find("filename"))
-            except:
+            except TypeError:
                 pass
 
         xmlstr = minidom.parseString(

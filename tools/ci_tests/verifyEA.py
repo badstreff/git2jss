@@ -29,21 +29,15 @@ if CONFIG_FILE != "":
     CONFPARSER.read(CONFIG_FILE)
     try:
         username = CONFPARSER.get("jss", "username")
-    except configparser.NoOptionError:
-        print("Can't find username in configfile")
-    try:
         password = CONFPARSER.get("jss", "password")
-    except configparser.NoOptionError:
-        print("Can't find password in configfile")
-    try:
         url = CONFPARSER.get("jss", "server")
-    except configparser.NoOptionError:
-        print("Can't find url in configfile")
-    try:
         smart_group = CONFPARSER.get("verifyEA", "smart_group")
     except configparser.NoOptionError:
-        print("Can't find smart_group in configfile")
-
+        print("Can't find configs in configfile")
+        pass
+    except configparser.NoSectionError:
+        print("Can't find sections in configfile")
+        pass
 else:
     url = "https://your.jss.com"
     username = getpass.getuser()
@@ -93,6 +87,7 @@ def build_computers_data_object(token, group_id):
     r = requests.get(
         url + "/JSSResource/computergroups/id/{0}".format(group_id),
         headers={"Content-Type": "application/xml", "Authorization": "Bearer " + token},
+        timeout=5
     )
 
     tree = eTree.fromstring(r.content)
@@ -104,6 +99,7 @@ def build_computers_data_object(token, group_id):
         r = requests.get(
             url + "/JSSResource/computers/id/{0}".format(resource_id),
             headers={"Content-Type": "application/json", "Authorization": "Bearer " + token},
+            timeout=5
         )
 
         # Parse xml
