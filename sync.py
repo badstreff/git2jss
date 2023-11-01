@@ -474,19 +474,19 @@ if __name__ == "__main__":
         CONFPARSER.read(CONFIG_FILE)
         try:
             username = CONFPARSER.get("jss", "username")
-        except configparser.NoOptionError as A:
+        except configparser.NoOptionError:
             print("Can't find username in configfile")
         try:
             password = CONFPARSER.get("jss", "password")
-        except:
+        except configparser.NoOptionError:
             print("Can't find password in configfile")
         try:
             url = CONFPARSER.get("jss", "server")
-        except:
+        except configparser.NoOptionError:
             print("Can't find url in configfile")
         try:
             sync_path = CONFPARSER.get("jss", "sync_path")
-        except:
+        except configparser.NoOptionError:
             print("Can't find sync_path in config")
 
     # Ask for password if not supplied via command line args
