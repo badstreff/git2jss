@@ -9,7 +9,7 @@ function scripts() {
 	printf "\033[31m                           Working on Scripts\n"
 	printf "\033[31m---------------------------------------------------------------------------------\n"
 	printf "\033[0m"
-scriptfolders=$(ls -1 ./scripts | awk 'NR>1')
+scriptfolders=$(ls -1 ./scripts | grep -v templates)
 	while read folder ; do 
 		echo "$folder"
 		xmllint --noout ./scripts/"$folder"/*.xml
@@ -20,7 +20,7 @@ scriptfolders=$(ls -1 ./scripts | awk 'NR>1')
 
 
 function ea(){
-	eafolders=$(ls -1 ./extension_attributes | awk 'NR>1')
+	eafolders=$(ls -1 ./extension_attributes | grep -v templates)
 
 	printf "\033[31m---------------------------------------------------------------------------------\n"
 	printf "\033[31m                        Working on Extension Attributes\n"

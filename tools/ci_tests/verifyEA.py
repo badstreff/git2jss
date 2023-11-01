@@ -36,7 +36,6 @@ if CONFIG_FILE != "":
         print("Can't find configs in configfile")
     except configparser.NoSectionError:
         print("Can't find sections in configfile")
-        pass
 else:
     url = "https://your.jss.com"
     username = getpass.getuser()
