@@ -34,7 +34,6 @@ if CONFIG_FILE != "":
         smart_group = CONFPARSER.get("verifyEA", "smart_group")
     except configparser.NoOptionError:
         print("Can't find configs in configfile")
-        pass
     except configparser.NoSectionError:
         print("Can't find sections in configfile")
         pass
@@ -64,15 +63,15 @@ def invalidate_uapi_token(uapi_token):
     _ = requests.post(url=jamf_test_url, headers=headers, timeout=5)
 
 
-def overwrite_file():
+def overwrite_file(file_path):
     print("Overwriting File: computers.json...")
-    with open("computers.json", "w") as f:
+    with open(file_path, "w") as f:
         f.write(json.dumps(computers))
 
 
-def read_file():
+def read_file(file_path):
     print("Reading cached data from disk...")
-    with open("computers.json", "r") as f:
+    with open(file_path, "r") as f:
         computers_from_disk = json.load(f)
         return computers_from_disk
 
@@ -139,8 +138,9 @@ def compare_computer(computer_id):
 
 # Is this the first time it was run?
 mypath = os.path.dirname(os.path.realpath(__file__))
-if os.path.exists(os.path.join(mypath, "computers.json")):
-    computers_from_disk = read_file()
+myfile = os.path.join(mypath, "computers.json")
+if os.path.exists(myfile):
+    computers_from_disk = read_file(myfile)
 else:
     print("No cached data found, writing new data to computers.json")
     overwrite = True
@@ -151,8 +151,8 @@ token = get_uapi_token()
 computers = build_computers_data_object(token, smart_group)
 
 # Overwrite local file?
-if overwrite == True:
-    overwrite_file()
+if overwrite:
+    overwrite_file(myfile)
     print("Computer data staged for comparison with future runs.")
 else:
     # Compare each computer
