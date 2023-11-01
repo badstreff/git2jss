@@ -5,20 +5,20 @@
 
 #Load up some variables
 #Define scripts and templates folders
-scripts=$(ls -p scripts | grep -v '/$' | sed -e 's/\..*$//')
-scripts_templates=$(ls -p  scripts/templates/| sed -e 's/\..*$//')
+scripts=$(ls -1 scripts | grep -v "templates")
+scripts_templates=$(ls -1 scripts/templates/)
 
 #Define EA and templates
-extensionattributes=$(ls -p  extension_attributes | grep -v '/$' | sed -e 's/\..*$//')
-extensionattributes_templates=$(ls -p extension_attributes/templates/| sed -e 's/\..*$//')
+extensionattributes=$(ls -1  extension_attributes | grep -v "templates")
+extensionattributes_templates=$(ls -1 extension_attributes/templates/)
 
 
 #Validate both the Script and the Template for the Script exist.
-echo "Making sure files exist in both places in scripts and scripts/Templates"
+echo "Making sure files with same names exist in both places in scripts and scripts/Templates"
 scriptcompare=$(sdiff -bBWsw 75 <(echo "$scripts") <(echo "$scripts_templates" ))
 
 if [ "$scriptcompare" == "" ]; then
- 	echo "Script and Script Template Exist All good in the hood!"
+ 	echo "Script and Script Template Exist in both folders!"
 else
 	echo "Errors! occurred please correct the below"
 	echo "             Scripts                 |            Templates"
@@ -31,10 +31,10 @@ fi
 
 
 #Valate both the EA and the Template for the EA exist.
-echo "Making sure files exist in both places extension_attributes and extension_attributes/Templates"
+echo "Making sure files with same names exist in both places extension_attributes and extension_attributes/Templates"
 eacompare=$(sdiff -bBWsw 75 <(echo "$extensionattributes") <(echo "$extensionattributes_templates"))
 if [ "$eacompare" == "" ]; then
- 	echo "EA and EA Template Exist All good in the hood!"
+ 	echo "EA and EA Template Exist in both folders!"
 else
 	echo "Errors! occurred please correct the below"
 	echo "       Extension Attributes          |          Templates"

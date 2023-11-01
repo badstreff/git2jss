@@ -11,3 +11,6 @@ extension_attributes/*
 !extension_attributes/Last User/
 scripts/*
 !scripts/Install Software Updates/
+!scripts/templates
+!extension_attributes/templates
+tools/ci_tests/computers.json
