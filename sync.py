@@ -4,7 +4,6 @@ import warnings
 import os
 from os.path import dirname, join, realpath
 import sys
-import xml.etree.ElementTree as eTree
 import getpass
 import argparse
 import logging
@@ -14,6 +13,7 @@ import aiohttp
 import uvloop
 import configparser
 import requests
+from defusedxml import ElementTree as eTree
 
 logging.basicConfig(
     level=logging.DEBUG,
@@ -226,7 +226,7 @@ async def get_ea_template(session, url, user, passwd, ext_attr):
         with open(
             join(sync_path, "extension_attributes", ext_attr, xml_file[0]), "r"
         ) as file:
-            template = eTree.fromstring(file.read())
+            template = eTree.parse(file.read())
     except IndexError:
         with async_timeout.timeout(args.timeout):
             headers = {

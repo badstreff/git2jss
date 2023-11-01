@@ -4,3 +4,4 @@ aiodns
 uvloop
 requests
 configparser
+defusedxml

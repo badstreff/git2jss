@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 import getpass
 import requests
-from xml.etree import ElementTree as ET
+from defusedxml import ElementTree as ET
 from xml.dom import minidom
 import os
 import argparse
@@ -18,7 +18,7 @@ def get_uapi_token():
     fetches api token
     """
     jamf_test_url = url + "/api/v1/auth/token"
-    response = requests.post(url=jamf_test_url, auth=(username, password))
+    response = requests.post(url=jamf_test_url, auth=(username, password), timeout=5)
     response_json = response.json()
     return response_json["token"]
 
@@ -29,7 +29,7 @@ def invalidate_uapi_token(uapi_token):
     """
     jamf_test_url = url + "/api/v1/auth/invalidate-token"
     headers = {"Accept": "*/*", "Authorization": "Bearer " + uapi_token}
-    _ = requests.post(url=jamf_test_url, headers=headers)
+    _ = requests.post(url=jamf_test_url, headers=headers, timeout=5)
 
 
 def download_scripts(
@@ -79,6 +79,7 @@ def download_scripts(
             "Authorization": "Bearer " + token,
         },
         verify=args.do_not_verify_ssl,
+        timeout=5
     )
 
     # Basic error handling
@@ -105,6 +106,7 @@ def download_scripts(
                 "Authorization": "Bearer " + token,
             },
             verify=args.do_not_verify_ssl,
+            timeout=5
         )
         tree = ET.fromstring(r.content)
 
