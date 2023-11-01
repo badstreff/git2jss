@@ -14,6 +14,8 @@ import aiohttp
 import uvloop
 import configparser
 import requests
+import configparser
+import requests
 
 logging.basicConfig(
     level=logging.DEBUG,
@@ -50,6 +52,7 @@ def invalidate_uapi_token(uapi_token):
     jamf_test_url = url + "/api/v1/auth/invalidate-token"
     headers = {"Accept": "*/*", "Authorization": "Bearer " + uapi_token}
     _ = requests.post(url=jamf_test_url, headers=headers, timeout=5)
+
 
 
 def check_for_changes():
@@ -151,6 +154,7 @@ async def upload_extension_attributes(session, url, user, passwd, semaphore):
 async def upload_extension_attribute(session, url, user, passwd, ext_attr, semaphore):
     has_script = True
 
+
     # sync_path = dirname(realpath(__file__))
     # auth = aiohttp.BasicAuth(user, passwd)
     headers = {
@@ -176,6 +180,7 @@ async def upload_extension_attribute(session, url, user, passwd, ext_attr, semap
             data = f.read()
     async with semaphore:
         with async_timeout.timeout(args.timeout):
+            template = await get_ea_template(session, url, user, passwd, ext_attr)
             template = await get_ea_template(session, url, user, passwd, ext_attr)
             async with session.get(
                 url
@@ -226,7 +231,7 @@ async def get_ea_template(session, url, user, passwd, ext_attr):
         with open(
             join(sync_path, "extension_attributes", ext_attr, xml_file[0]), "r"
         ) as file:
-            template = eTree.fromstring(file.read())
+            template = ET.fromstring(file.read())
     except IndexError:
         with async_timeout.timeout(args.timeout):
             headers = {
@@ -246,17 +251,15 @@ async def get_ea_template(session, url, user, passwd, ext_attr):
                         + ext_attr,
                         headers=headers,
                     ) as response:
-                        template = eTree.fromstring(await response.text())
+                        template = ET.fromstring(await response.text())
                 else:
-                    template = eTree.parse(
-                        join(sync_path, "templates/ea.xml")
-                    ).getroot()
+                    template = ET.parse(join(sync_path, "templates/ea.xml")).getroot()
     # name is mandatory, so we use the foldername if nothing is set in
     # a template
     if args.verbose:
-        print(eTree.tostring(template))
+        print(ET.tostring(template))
     if template.find("category") and template.find("category").text not in CATEGORIES:
-        eTree.SubElement(template, "category").text = "None"
+        ET.SubElement(template, "category").text = "None"
         if args.verbose:
             c = template.find("category").text
             print(
@@ -264,7 +267,7 @@ async def get_ea_template(session, url, user, passwd, ext_attr):
                   setting to None"""
             )
     if template.find("name") is None:
-        eTree.SubElement(template, "name").text = ext_attr
+        ET.SubElement(template, "name").text = ext_attr
     elif not template.find("name").text or template.find("name").text is None:
         template.find("name").text = ext_attr
     return template
@@ -324,12 +327,12 @@ async def upload_script(session, url, user, passwd, script, semaphore):
                         url + "/JSSResource/scripts/name/" + template.find("name").text
                     )
                     resp = await session.put(
-                        put_url, data=eTree.tostring(template), headers=headers
+                        put_url, data=ET.tostring(template), headers=headers
                     )
                 else:
                     post_url = url + "/JSSResource/scripts/id/0"
                     resp = await session.post(
-                        post_url, data=eTree.tostring(template), headers=headers
+                        post_url, data=ET.tostring(template), headers=headers
                     )
     if resp.status in (201, 200):
         print("Uploaded script: %s" % template.find("name").text)
@@ -349,7 +352,7 @@ async def get_script_template(session, url, user, passwd, script):
     ]
     try:
         with open(join(sync_path, "scripts", script, xml_file[0]), "r") as file:
-            template = eTree.fromstring(file.read())
+            template = ET.fromstring(file.read())
     except IndexError:
         with async_timeout.timeout(args.timeout):
             headers = {
@@ -364,13 +367,20 @@ async def get_script_template(session, url, user, passwd, script):
                     async with session.get(
                         url + "/JSSResource/scripts/name/" + script, headers=headers
                     ) as response:
-                        template = eTree.fromstring(await response.text())
+                        template = ET.fromstring(await response.text())
                 else:
-                    template = eTree.parse(
+                    template = ET.parse(
                         join(sync_path, "templates/script.xml")
                     ).getroot()
     # name is mandatory, so we use the filename if nothing is set in a template
     if args.verbose:
+        print(ET.tostring(template))
+    if (
+        template.find("category") is not None
+        and template.find("category").text not in CATEGORIES
+    ):
+        c = template.find("category").text
+        template.remove(template.find("category"))
         print(eTree.tostring(template))
     if (
         template.find("category") is not None
@@ -383,6 +393,10 @@ async def get_script_template(session, url, user, passwd, script):
                 f"""WARNING: Unable to find category "{c}" in the JSS,
                     setting to None"""
             )
+    if template.find("name") is None:
+        ET.SubElement(template, "name").text = script
+    elif not template.find("name").text or template.find("name").text is None:
+        template.find("name").text = script
     if template.find("name") is None:
         eTree.SubElement(template, "name").text = script
     elif not template.find("name").text or template.find("name").text is None:
@@ -407,7 +421,7 @@ async def get_existing_categories(session, url, user, passwd, semaphore):
                         c.find("name").text
                         for c in [
                             e
-                            for e in eTree.fromstring(await resp.text()).findall(
+                            for e in ET.fromstring(await resp.text()).findall(
                                 "category"
                             )
                         ]
