@@ -1,5 +1,5 @@
 # git2jss
-[![Codacy Badge](https://api.codacy.com/project/badge/Grade/d9d618c32e93436ea67102fd3d3f5b21)](https://www.codacy.com/app/adam-furbee/git2jss?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=BadStreff/git2jss&amp;utm_campaign=Badge_Grade)
+[![Codacy Badge](https://app.codacy.com/project/badge/Grade/c49c0bd6a88d4f1e8c6808455171178e)](https://app.codacy.com/gh/rustymyers/git2jss/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade)
 
 A fast asynchronous python library for syncing your scripts in git with your JSS easily. This allows admins to keep their script in a version control system for easy updating rather than googling and copy-pasting from resources that they find online.
 
@@ -33,9 +33,9 @@ A config file can be created in the project root or the users home folder. When 
 
  A jamfapi.cfg file can provide the following variables:
 
- - username
- - password
- - url
+-   username
+-   password
+-   url
 
 ### Prerequisites
 git2jss requires [Python 3.6](https://www.python.org/downloads/) and the python modules listed in `requirements.txt`

@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/zsh
 ###################################################################################
 ## Validates XML for proper formatting
 ###################################################################################
@@ -9,10 +9,10 @@ function scripts() {
 	printf "\033[31m                           Working on Scripts\n"
 	printf "\033[31m---------------------------------------------------------------------------------\n"
 	printf "\033[0m"
-scriptfolders=$(ls -ltr ./scripts | cut -c52- | awk 'NR>1')
+scriptfolders=$(ls -1 ./scripts | grep -v templates)
 	while read folder ; do 
 		echo "$folder"
-		xmllint  --noout  ./scripts/"$folder"/*.xml
+		xmllint --noout ./scripts/"$folder"/*.xml
 	done <<< "$scriptfolders"
 
 }
@@ -20,7 +20,7 @@ scriptfolders=$(ls -ltr ./scripts | cut -c52- | awk 'NR>1')
 
 
 function ea(){
-	eafolders=$(ls -ltr ./extension_attributes | cut -c52- | awk 'NR>1')
+	eafolders=$(ls -1 ./extension_attributes | grep -v templates)
 
 	printf "\033[31m---------------------------------------------------------------------------------\n"
 	printf "\033[31m                        Working on Extension Attributes\n"
@@ -30,7 +30,7 @@ function ea(){
 
 		echo "$folder"
 		
-		xmllint  --noout  ./extension_attributes/"$folder"/*.xml
+		xmllint --noout ./extension_attributes/"$folder"/*.xml
 	done <<< "$eafolders"
 
 }

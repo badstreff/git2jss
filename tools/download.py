@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 import getpass
 import requests
-from xml.etree import ElementTree as ET
+from defusedxml import ElementTree as eTree
 from xml.dom import minidom
 import os
 import argparse
@@ -18,7 +18,7 @@ def get_uapi_token():
     fetches api token
     """
     jamf_test_url = url + "/api/v1/auth/token"
-    response = requests.post(url=jamf_test_url, auth=(username, password))
+    response = requests.post(url=jamf_test_url, auth=(username, password), timeout=5)
     response_json = response.json()
     return response_json["token"]
 
@@ -29,7 +29,7 @@ def invalidate_uapi_token(uapi_token):
     """
     jamf_test_url = url + "/api/v1/auth/invalidate-token"
     headers = {"Accept": "*/*", "Authorization": "Bearer " + uapi_token}
-    _ = requests.post(url=jamf_test_url, headers=headers)
+    _ = requests.post(url=jamf_test_url, headers=headers, timeout=5)
 
 
 def download_scripts(
@@ -79,6 +79,7 @@ def download_scripts(
             "Authorization": "Bearer " + token,
         },
         verify=args.do_not_verify_ssl,
+        timeout=5,
     )
 
     # Basic error handling
@@ -90,7 +91,7 @@ def download_scripts(
             % r.status_code
         )
         exit(1)
-    tree = ET.fromstring(r.content)
+    tree = eTree.fromstring(r.content)
     resource_ids = [e.text for e in tree.findall(".//id")]
 
     # Download each resource and save to disk
@@ -105,8 +106,9 @@ def download_scripts(
                 "Authorization": "Bearer " + token,
             },
             verify=args.do_not_verify_ssl,
+            timeout=5,
         )
-        tree = ET.fromstring(r.content)
+        tree = eTree.fromstring(r.content)
 
         if mode == "ea":
             if tree.find("input_type/type").text != "script":
@@ -132,7 +134,7 @@ def download_scripts(
 
         # Create script string, and determine the file extension
         if get_script:
-            xmlstr = ET.tostring(
+            xmlstr = eTree.tostring(
                 tree.find(script_xml), encoding="unicode", method="text"
             ).replace("\r", "")
             if xmlstr.startswith("#!/bin/sh"):
@@ -166,11 +168,11 @@ def download_scripts(
                 tree.remove(tree.find("id"))
                 tree.remove(tree.find("script_contents_encoded"))
                 tree.remove(tree.find("filename"))
-            except:
+            except TypeError:
                 pass
 
         xmlstr = minidom.parseString(
-            ET.tostring(tree, encoding="unicode", method="xml")
+            eTree.tostring(tree, encoding="unicode", method="xml")
         ).toprettyxml(indent="   ")
         with open(os.path.join(resource_path, "%s.xml" % mode), "w") as f:
             f.write(xmlstr)
@@ -202,26 +204,23 @@ if __name__ == "__main__":
             CONFIG_FILE = config_path
 
     if CONFIG_FILE != "":
-        try:
-            # Get config
-            CONFPARSER.read(CONFIG_FILE)
-        except:
-            print("Can't read config file")
+        # Get config
+        CONFPARSER.read(CONFIG_FILE)
         try:
             username = CONFPARSER.get("jss", "username")
-        except:
+        except configparser.NoOptionError:
             print("Can't find username in configfile")
         try:
             password = CONFPARSER.get("jss", "password")
-        except:
+        except configparser.NoOptionError:
             print("Can't find password in configfile")
         try:
             url = CONFPARSER.get("jss", "server")
-        except:
+        except configparser.NoOptionError:
             print("Can't find url in configfile")
         try:
             export_path = CONFPARSER.get("jss", "export_path")
-        except:
+        except configparser.NoOptionError:
             print("Can't find export_path in config")
 
     # Ask for password if not supplied via command line args

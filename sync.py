@@ -4,7 +4,6 @@ import warnings
 import os
 from os.path import dirname, join, realpath
 import sys
-import xml.etree.ElementTree as ET
 import getpass
 import argparse
 import logging
@@ -14,8 +13,7 @@ import aiohttp
 import uvloop
 import configparser
 import requests
-import configparser
-import requests
+from defusedxml import ElementTree as eTree
 
 logging.basicConfig(
     level=logging.DEBUG,
@@ -40,7 +38,7 @@ def get_uapi_token():
     fetches api token
     """
     jamf_test_url = url + "/api/v1/auth/token"
-    response = requests.post(url=jamf_test_url, auth=(username, password))
+    response = requests.post(url=jamf_test_url, auth=(username, password), timeout=5)
     response_json = response.json()
     return response_json["token"]
 
@@ -51,27 +49,7 @@ def invalidate_uapi_token(uapi_token):
     """
     jamf_test_url = url + "/api/v1/auth/invalidate-token"
     headers = {"Accept": "*/*", "Authorization": "Bearer " + uapi_token}
-    _ = requests.post(url=jamf_test_url, headers=headers)
-
-
-# https://github.com/lazymutt/Jamf-Pro-API-Sampler/blob/5f8efa92911271248f527e70bd682db79bc600f2/jamf_duplicate_detection.py#L99
-def get_uapi_token():
-    """
-    fetches api token
-    """
-    jamf_test_url = url + "/api/v1/auth/token"
-    response = requests.post(url=jamf_test_url, auth=(username, password))
-    response_json = response.json()
-    return response_json["token"]
-
-
-def invalidate_uapi_token(uapi_token):
-    """
-    invalidates api token
-    """
-    jamf_test_url = url + "/api/v1/auth/invalidate-token"
-    headers = {"Accept": "*/*", "Authorization": "Bearer " + uapi_token}
-    _ = requests.post(url=jamf_test_url, headers=headers)
+    _ = requests.post(url=jamf_test_url, headers=headers, timeout=5)
 
 
 def check_for_changes():
@@ -208,7 +186,7 @@ async def upload_extension_attribute(session, url, user, passwd, ext_attr, semap
                 if has_script and data:
                     template.find("input_type/script").text = data
                 if args.verbose:
-                    print(ET.tostring(template))
+                    print(eTree.tostring(template))
                     print("response status initial get: ", resp.status)
                 if resp.status == 200:
                     put_url = (
@@ -217,12 +195,12 @@ async def upload_extension_attribute(session, url, user, passwd, ext_attr, semap
                         + template.find("name").text
                     )
                     resp = await session.put(
-                        put_url, data=ET.tostring(template), headers=headers
+                        put_url, data=eTree.tostring(template), headers=headers
                     )
                 else:
                     post_url = url + "/JSSResource/computerextensionattributes/id/0"
                     resp = await session.post(
-                        post_url, data=ET.tostring(template), headers=headers
+                        post_url, data=eTree.tostring(template), headers=headers
                     )
     if args.verbose:
         print("response status: ", resp.status)
@@ -248,7 +226,7 @@ async def get_ea_template(session, url, user, passwd, ext_attr):
         with open(
             join(sync_path, "extension_attributes", ext_attr, xml_file[0]), "r"
         ) as file:
-            template = ET.fromstring(file.read())
+            template = eTree.parse(file.read())
     except IndexError:
         with async_timeout.timeout(args.timeout):
             headers = {
@@ -268,15 +246,17 @@ async def get_ea_template(session, url, user, passwd, ext_attr):
                         + ext_attr,
                         headers=headers,
                     ) as response:
-                        template = ET.fromstring(await response.text())
+                        template = eTree.fromstring(await response.text())
                 else:
-                    template = ET.parse(join(sync_path, "templates/ea.xml")).getroot()
+                    template = eTree.parse(
+                        join(sync_path, "templates/ea.xml")
+                    ).getroot()
     # name is mandatory, so we use the foldername if nothing is set in
     # a template
     if args.verbose:
-        print(ET.tostring(template))
+        print(eTree.tostring(template))
     if template.find("category") and template.find("category").text not in CATEGORIES:
-        ET.SubElement(template, "category").text = "None"
+        eTree.SubElement(template, "category").text = "None"
         if args.verbose:
             c = template.find("category").text
             print(
@@ -284,7 +264,7 @@ async def get_ea_template(session, url, user, passwd, ext_attr):
                   setting to None"""
             )
     if template.find("name") is None:
-        ET.SubElement(template, "name").text = ext_attr
+        eTree.SubElement(template, "name").text = ext_attr
     elif not template.find("name").text or template.find("name").text is None:
         template.find("name").text = ext_attr
     return template
@@ -344,12 +324,12 @@ async def upload_script(session, url, user, passwd, script, semaphore):
                         url + "/JSSResource/scripts/name/" + template.find("name").text
                     )
                     resp = await session.put(
-                        put_url, data=ET.tostring(template), headers=headers
+                        put_url, data=eTree.tostring(template), headers=headers
                     )
                 else:
                     post_url = url + "/JSSResource/scripts/id/0"
                     resp = await session.post(
-                        post_url, data=ET.tostring(template), headers=headers
+                        post_url, data=eTree.tostring(template), headers=headers
                     )
     if resp.status in (201, 200):
         print("Uploaded script: %s" % template.find("name").text)
@@ -369,7 +349,7 @@ async def get_script_template(session, url, user, passwd, script):
     ]
     try:
         with open(join(sync_path, "scripts", script, xml_file[0]), "r") as file:
-            template = ET.fromstring(file.read())
+            template = eTree.fromstring(file.read())
     except IndexError:
         with async_timeout.timeout(args.timeout):
             headers = {
@@ -384,14 +364,14 @@ async def get_script_template(session, url, user, passwd, script):
                     async with session.get(
                         url + "/JSSResource/scripts/name/" + script, headers=headers
                     ) as response:
-                        template = ET.fromstring(await response.text())
+                        template = eTree.fromstring(await response.text())
                 else:
-                    template = ET.parse(
+                    template = eTree.parse(
                         join(sync_path, "templates/script.xml")
                     ).getroot()
     # name is mandatory, so we use the filename if nothing is set in a template
     if args.verbose:
-        print(ET.tostring(template))
+        print(eTree.tostring(template))
     if (
         template.find("category") is not None
         and template.find("category").text not in CATEGORIES
@@ -404,7 +384,7 @@ async def get_script_template(session, url, user, passwd, script):
                     setting to None"""
             )
     if template.find("name") is None:
-        ET.SubElement(template, "name").text = script
+        eTree.SubElement(template, "name").text = script
     elif not template.find("name").text or template.find("name").text is None:
         template.find("name").text = script
     return template
@@ -427,7 +407,7 @@ async def get_existing_categories(session, url, user, passwd, semaphore):
                         c.find("name").text
                         for c in [
                             e
-                            for e in ET.fromstring(await resp.text()).findall(
+                            for e in eTree.fromstring(await resp.text()).findall(
                                 "category"
                             )
                         ]
@@ -490,26 +470,23 @@ if __name__ == "__main__":
             CONFIG_FILE = config_path
 
     if CONFIG_FILE != "":
-        try:
-            # Get config
-            CONFPARSER.read(CONFIG_FILE)
-        except:
-            print("Can't read config file")
+        # Get config
+        CONFPARSER.read(CONFIG_FILE)
         try:
             username = CONFPARSER.get("jss", "username")
-        except:
+        except configparser.NoOptionError:
             print("Can't find username in configfile")
         try:
             password = CONFPARSER.get("jss", "password")
-        except:
+        except configparser.NoOptionError:
             print("Can't find password in configfile")
         try:
             url = CONFPARSER.get("jss", "server")
-        except:
+        except configparser.NoOptionError:
             print("Can't find url in configfile")
         try:
             sync_path = CONFPARSER.get("jss", "sync_path")
-        except:
+        except configparser.NoOptionError:
             print("Can't find sync_path in config")
 
     # Ask for password if not supplied via command line args
@@ -537,3 +514,6 @@ if __name__ == "__main__":
         warnings.simplefilter("always", ResourceWarning)
 
     loop.run_until_complete(main())
+
+    # Remove token
+    invalidate_uapi_token(token)
